@@ -31,30 +31,46 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-      scrolled || !isHome ? 'bg-white/80 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'
+    <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+      scrolled || !isHome 
+        ? 'bg-indigo-600 shadow-2xl py-3 border-b border-indigo-500/30' 
+        : 'bg-transparent py-6'
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white">
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+              scrolled || !isHome ? 'bg-white text-indigo-600' : 'bg-indigo-600 text-white'
+            }`}>
               <Laptop className="w-6 h-6" />
             </div>
-            <span className="text-xl font-bold text-gray-900 tracking-tight">GAM IT Solutions</span>
+            <span className={`text-xl font-black tracking-tighter transition-colors duration-300 ${
+              scrolled || !isHome ? 'text-white' : 'text-gray-900'
+            }`}>
+              GAM IT <span className={scrolled || !isHome ? 'text-indigo-200' : 'text-indigo-600'}>Solutions</span>
+            </span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-gray-600 hover:text-indigo-600 font-medium transition-colors"
+                className={`text-sm font-black uppercase tracking-widest transition-all duration-300 hover:scale-105 ${
+                  scrolled || !isHome 
+                    ? 'text-indigo-100 hover:text-white' 
+                    : 'text-gray-600 hover:text-indigo-600'
+                }`}
               >
                 {link.name}
               </Link>
             ))}
-            <button className="px-6 py-2.5 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-all">
+            <button className={`px-6 py-2.5 rounded-xl font-black text-sm uppercase tracking-widest transition-all shadow-lg ${
+              scrolled || !isHome
+                ? 'bg-white text-indigo-600 hover:bg-indigo-50 shadow-indigo-900/20'
+                : 'bg-gray-900 text-white hover:bg-gray-800 shadow-gray-200'
+            }`}>
               Login
             </button>
           </div>
@@ -63,7 +79,9 @@ const Navbar = () => {
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 text-gray-600 hover:text-indigo-600 transition-colors"
+              className={`p-2 transition-colors ${
+                scrolled || !isHome ? 'text-white' : 'text-gray-600'
+              }`}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -78,7 +96,11 @@ const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-t border-gray-100 overflow-hidden"
+            className={`md:hidden overflow-hidden border-t ${
+              scrolled || !isHome 
+                ? 'bg-indigo-700 border-indigo-500/30' 
+                : 'bg-white border-gray-100'
+            }`}
           >
             <div className="px-4 pt-2 pb-6 space-y-1">
               {navLinks.map((link) => (
@@ -86,13 +108,21 @@ const Navbar = () => {
                   key={link.name}
                   to={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="block px-3 py-4 text-base font-medium text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all"
+                  className={`block px-3 py-4 text-sm font-black uppercase tracking-widest rounded-xl transition-all ${
+                    scrolled || !isHome 
+                      ? 'text-indigo-100 hover:text-white hover:bg-indigo-600' 
+                      : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
+                  }`}
                 >
                   {link.name}
                 </Link>
               ))}
               <div className="pt-4">
-                <button className="w-full px-6 py-3 rounded-xl bg-gray-900 text-white font-semibold hover:bg-gray-800 transition-all">
+                <button className={`w-full px-6 py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${
+                  scrolled || !isHome
+                    ? 'bg-white text-indigo-600 hover:bg-indigo-50'
+                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                }`}>
                   Login
                 </button>
               </div>
