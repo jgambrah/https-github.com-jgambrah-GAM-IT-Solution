@@ -1,0 +1,190 @@
+{
+  "entities": {
+    "demoRequest": {
+      "title": "Demo Request",
+      "description": "A request for a product demo from a potential client.",
+      "type": "object",
+      "properties": {
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the requester."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the requester."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The work email of the requester."
+        },
+        "product": {
+          "type": "string",
+          "description": "The product they are interested in.",
+          "enum": ["gam-hub", "gam-edu", "gam-med", "retail-os", "hotel-intel", "logistics-pro", "fintech-vault"]
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the request.",
+          "enum": ["pending", "contacted", "completed", "cancelled"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the request was created."
+        }
+      },
+      "required": ["firstName", "lastName", "email", "product", "status", "createdAt"]
+    },
+    "feedback": {
+      "title": "Feedback",
+      "description": "General feedback or feature requests from users.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the person providing feedback."
+        },
+        "message": {
+          "type": "string",
+          "description": "The feedback message."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the feedback was submitted."
+        }
+      },
+      "required": ["name", "message", "createdAt"]
+    },
+    "newsletterSubscription": {
+      "title": "Newsletter Subscription",
+      "description": "A subscription to the GAM IT Solutions newsletter.",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email address subscribed."
+        },
+        "subscribedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the subscription occurred."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Whether the subscription is currently active."
+        }
+      },
+      "required": ["email", "subscribedAt", "active"]
+    },
+    "user": {
+      "title": "User",
+      "description": "A user of the system, potentially with administrative privileges.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The unique Firebase Auth UID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The user's display name."
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role in the system.",
+          "enum": ["admin", "user"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the user record was created."
+        }
+      },
+      "required": ["uid", "email", "role", "createdAt"]
+    },
+    "testimonial": {
+      "title": "Testimonial",
+      "description": "A client testimonial.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "content": { "type": "string" },
+        "avatar": { "type": "string" },
+        "color": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "role", "content", "avatar", "color", "createdAt"]
+    },
+    "newsItem": {
+      "title": "News Item",
+      "description": "A news update or post.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "image", "video", "youtube", "instagram", "tiktok"] },
+        "mediaUrl": { "type": "string" },
+        "author": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "type", "author", "createdAt"]
+    },
+    "teamMember": {
+      "title": "Team Member",
+      "description": "A member of the GAM IT Solutions team.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "bio": { "type": "string" },
+        "avatar": { "type": "string" },
+        "linkedin": { "type": "string" },
+        "github": { "type": "string" },
+        "kaggle": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "order": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "role", "bio", "avatar", "order", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/demoRequests/{requestId}": {
+      "schema": "demoRequest",
+      "description": "Collection of demo requests."
+    },
+    "/feedback/{feedbackId}": {
+      "schema": "feedback",
+      "description": "Collection of user feedback."
+    },
+    "/newsletterSubscriptions/{subscriptionId}": {
+      "schema": "newsletterSubscription",
+      "description": "Collection of newsletter subscriptions."
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Collection of user profiles and roles."
+    },
+    "/testimonials/{testimonialId}": {
+      "schema": "testimonial",
+      "description": "Collection of client testimonials."
+    },
+    "/news/{newsId}": {
+      "schema": "newsItem",
+      "description": "Collection of news updates."
+    },
+    "/team/{memberId}": {
+      "schema": "teamMember",
+      "description": "Collection of team members."
+    }
+  }
+}
