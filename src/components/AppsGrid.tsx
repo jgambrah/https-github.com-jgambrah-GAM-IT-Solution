@@ -6,27 +6,33 @@ import { Link } from 'react-router-dom';
 const AppsGrid = () => {
   const apps = [
     {
+      id: "gam-hub",
       name: "GAM Hub",
       tagline: "The National Infrastructure of Ghana.",
       description: "A definitive national hub featuring The Market (Escrow Commerce), The Arena (AI-Refereed Combat), and Ghana Pulse (Social Media).",
       color: "bg-indigo-600",
       link: "https://gam-hub.vercel.app/",
+      demoLink: "https://gam-hub.vercel.app/",
       external: true,
     },
     {
+      id: "gam-edu",
       name: "GAM Edu",
       tagline: "Intelligent OS for Future-Ready Schools.",
       description: "AI-powered school management system with automated billing, academic tracking, and parent engagement.",
       color: "bg-emerald-600",
       link: "/apps/gam-edu",
+      demoLink: "https://gam-it-service.app/",
       external: false,
     },
     {
+      id: "gam-med",
       name: "GAM Med",
       tagline: "Total Hospital Operating System.",
       description: "Comprehensive EHR & ERP ecosystem for modern healthcare facilities in Ghana. Clinical, financial, and logistics intelligence.",
       color: "bg-cyan-600",
       link: "/apps/gam-med",
+      demoLink: "https://gam-med.vercel.app/",
       external: false,
     },
   ];
@@ -84,7 +90,7 @@ const AppsGrid = () => {
                   {app.description}
                 </p>
               </div>
-              <div className="p-8 pt-0">
+              <div className="p-8 pt-0 flex flex-col gap-3">
                 {app.external ? (
                   <a 
                     href={app.link}
@@ -100,6 +106,14 @@ const AppsGrid = () => {
                     View Details
                   </Link>
                 )}
+                <a 
+                  href={app.demoLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center w-full py-3 px-6 rounded-xl border-2 border-indigo-600 text-indigo-600 font-semibold hover:bg-indigo-50 transition-colors"
+                >
+                  Request Demo
+                </a>
               </div>
             </motion.div>
           ))}

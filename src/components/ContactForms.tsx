@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useLocation } from 'react-router-dom';
 import { Send, CheckCircle, AlertCircle } from 'lucide-react';
 import { db, collection, addDoc, serverTimestamp, handleFirestoreError, OperationType } from '../firebase';
 
@@ -8,6 +9,16 @@ const ContactForms = () => {
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const product = params.get('product');
+    if (product) {
+      setSelectedProduct(product);
+    }
+  }, [location.search]);
 
   const handleDemoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -135,7 +146,8 @@ const ContactForms = () => {
                 <select
                   name="product"
                   required
-                  defaultValue=""
+                  value={selectedProduct}
+                  onChange={(e) => setSelectedProduct(e.target.value)}
                   className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all appearance-none"
                 >
                   <option value="" disabled className="text-gray-900">Select Product</option>

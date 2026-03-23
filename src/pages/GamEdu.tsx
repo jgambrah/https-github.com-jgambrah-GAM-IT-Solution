@@ -17,6 +17,7 @@ import {
   Globe,
   CheckCircle2,
   ArrowLeft,
+  ArrowRight,
   Zap,
   Smartphone as MobileIcon
 } from 'lucide-react';
@@ -137,12 +138,14 @@ const GamEdu = () => {
                 >
                   Launch App <Globe className="w-5 h-5" />
                 </a>
-                <Link 
-                  to="/#contact"
+                <a 
+                  href="https://gam-it-service.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-8 py-4 bg-indigo-700 text-white font-bold rounded-2xl hover:bg-indigo-600 transition-all"
                 >
                   Request a Demo
-                </Link>
+                </a>
               </div>
             </motion.div>
             <motion.div
@@ -212,7 +215,7 @@ const GamEdu = () => {
                   </div>
                   <h3 className="text-2xl font-bold">{feature.title}</h3>
                 </div>
-                <ul className="space-y-4">
+                <ul className="space-y-4 mb-8">
                   {feature.items.map((item, j) => (
                     <li key={j} className="flex items-start gap-3 text-gray-600">
                       <CheckCircle2 className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0" />
@@ -220,6 +223,14 @@ const GamEdu = () => {
                     </li>
                   ))}
                 </ul>
+                <a 
+                  href="https://gam-it-service.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-indigo-600 font-bold hover:text-indigo-700 transition-colors group"
+                >
+                  Request Demo for {feature.title} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </a>
               </motion.div>
             ))}
           </div>
@@ -271,18 +282,22 @@ const GamEdu = () => {
                 Join the growing number of schools using GAM Edu to increase revenue and reduce overhead.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Link 
-                  to="/#contact"
+                <a 
+                  href="https://gam-it-service.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-10 py-5 bg-white text-indigo-600 font-bold rounded-2xl hover:bg-indigo-50 transition-all text-lg"
                 >
                   Request a Demo
-                </Link>
-                <Link 
-                  to="/#contact"
+                </a>
+                <a 
+                  href="https://gam-it-service.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-10 py-5 bg-indigo-500 text-white font-bold rounded-2xl hover:bg-indigo-400 transition-all text-lg"
                 >
                   Contact Sales
-                </Link>
+                </a>
               </div>
             </div>
             {/* Decorative circles */}

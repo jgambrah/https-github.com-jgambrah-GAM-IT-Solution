@@ -11,6 +11,7 @@ import {
   Brain, 
   ShieldCheck, 
   ArrowLeft,
+  ArrowRight,
   Globe,
   CheckCircle2,
   FileText,
@@ -163,12 +164,14 @@ const GamMed = () => {
                 >
                   Launch App <Globe className="w-5 h-5" />
                 </a>
-                <Link 
-                  to="/#contact"
+                <a 
+                  href="https://gam-med.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-8 py-4 bg-cyan-700 text-white font-bold rounded-2xl hover:bg-cyan-600 transition-all"
                 >
                   Request a Demo
-                </Link>
+                </a>
               </div>
             </motion.div>
             <motion.div
@@ -241,7 +244,7 @@ const GamMed = () => {
                   </div>
                   <h3 className="text-xl font-bold">{category.title}</h3>
                 </div>
-                <ul className="space-y-3 flex-grow">
+                <ul className="space-y-3 flex-grow mb-6">
                   {category.items.map((item, j) => (
                     <li key={j} className="flex items-start gap-3 text-sm text-gray-600">
                       <CheckCircle2 className="w-4 h-4 text-cyan-500 mt-0.5 flex-shrink-0" />
@@ -249,6 +252,14 @@ const GamMed = () => {
                     </li>
                   ))}
                 </ul>
+                <a 
+                  href="https://gam-med.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-cyan-600 font-bold hover:text-cyan-700 transition-colors group"
+                >
+                  Request Demo for {category.title} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </a>
               </motion.div>
             ))}
           </div>
@@ -299,18 +310,22 @@ const GamMed = () => {
                 Join the healthcare revolution in Ghana. Onboard your hospital in seconds with pre-injected GHS catalogs.
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Link 
-                  to="/#contact"
+                <a 
+                  href="https://gam-med.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-10 py-5 bg-white text-cyan-900 font-bold rounded-2xl hover:bg-cyan-50 transition-all text-lg"
                 >
                   Request a Demo
-                </Link>
-                <Link 
-                  to="/#contact"
+                </a>
+                <a 
+                  href="https://gam-med.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="px-10 py-5 bg-cyan-700 text-white font-bold rounded-2xl hover:bg-cyan-600 transition-all text-lg"
                 >
                   Contact Sales
-                </Link>
+                </a>
               </div>
             </div>
             {/* Decorative elements */}
