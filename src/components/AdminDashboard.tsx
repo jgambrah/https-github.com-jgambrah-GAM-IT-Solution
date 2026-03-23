@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { LogIn, Plus, Trash2, ShieldCheck, User, Users, LogOut, Newspaper, MessageSquare, Video, Image as ImageIcon, Youtube, Instagram, Music } from 'lucide-react';
+import { LogIn, Plus, Trash2, ShieldCheck, User, Users, LogOut, Newspaper, MessageSquare, Video, Image as ImageIcon, Youtube, Instagram, Music, Mail } from 'lucide-react';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState(auth.currentUser);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'testimonials' | 'news' | 'team'>('testimonials');
+  const [activeTab, setActiveTab] = useState<'testimonials' | 'news' | 'team' | 'contacts'>('testimonials');
+  const [demoRequests, setDemoRequests] = useState<any[]>([]);
+  const [feedback, setFeedback] = useState<any[]>([]);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
 
   useEffect(() => {
     console.log("Current Active Tab:", activeTab);
@@ -85,10 +88,40 @@ const AdminDashboard = () => {
         handleFirestoreError(error, OperationType.LIST, 'team');
       });
 
+      // Demo Requests listener
+      const qDemo = query(collection(db, 'demoRequests'), orderBy('createdAt', 'desc'));
+      const unsubscribeDemo = onSnapshot(qDemo, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setDemoRequests(data);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'demoRequests');
+      });
+
+      // Feedback listener
+      const qFeedback = query(collection(db, 'feedback'), orderBy('createdAt', 'desc'));
+      const unsubscribeFeedback = onSnapshot(qFeedback, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setFeedback(data);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'feedback');
+      });
+
+      // Subscriptions listener
+      const qSub = query(collection(db, 'newsletterSubscriptions'), orderBy('subscribedAt', 'desc'));
+      const unsubscribeSub = onSnapshot(qSub, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSubscriptions(data);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'newsletterSubscriptions');
+      });
+
       return () => {
         unsubscribeT();
         unsubscribeN();
         unsubscribeTeam();
+        unsubscribeDemo();
+        unsubscribeFeedback();
+        unsubscribeSub();
       };
     }
   }, [isAdmin]);
@@ -377,6 +410,17 @@ const AdminDashboard = () => {
             <Users className="w-5 h-5" />
             Team
           </button>
+          <button
+            onClick={() => setActiveTab('contacts')}
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
+              activeTab === 'contacts' 
+              ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+              : 'bg-white text-gray-500 hover:bg-gray-50'
+            }`}
+          >
+            <Mail className="w-5 h-5" />
+            Contacts
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -611,12 +655,138 @@ const AdminDashboard = () => {
                   </button>
                 </>
               )}
+
+              {activeTab === 'contacts' && (
+                <div className="space-y-6">
+                  <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-gray-900">
+                    <Mail className="w-6 h-6 text-indigo-600" />
+                    Contact Summary
+                  </h2>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="bg-indigo-50 p-6 rounded-2xl">
+                      <p className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-1">Demo Requests</p>
+                      <p className="text-3xl font-black text-indigo-600">{demoRequests.length}</p>
+                    </div>
+                    <div className="bg-emerald-50 p-6 rounded-2xl">
+                      <p className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-1">Feedback</p>
+                      <p className="text-3xl font-black text-emerald-600">{feedback.length}</p>
+                    </div>
+                    <div className="bg-amber-50 p-6 rounded-2xl">
+                      <p className="text-xs font-black text-amber-400 uppercase tracking-widest mb-1">Subscribers</p>
+                      <p className="text-3xl font-black text-amber-600">{subscriptions.length}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* List Column */}
           <div className="lg:col-span-2">
             <div className="space-y-4">
+              {activeTab === 'contacts' && (
+                <div className="space-y-8">
+                  {/* Demo Requests Section */}
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                      <Video className="w-5 h-5 text-indigo-600" />
+                      Demo Requests
+                    </h3>
+                    <div className="space-y-4">
+                      {demoRequests.length === 0 ? (
+                        <p className="text-gray-400 italic">No demo requests yet.</p>
+                      ) : (
+                        demoRequests.map((r) => (
+                          <div key={r.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start justify-between gap-4">
+                            <div>
+                              <h4 className="font-black text-gray-900">{r.firstName} {r.lastName}</h4>
+                              <p className="text-sm text-indigo-600 font-bold mb-2">{r.email}</p>
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-md text-[10px] font-black uppercase tracking-tighter">
+                                  {r.product}
+                                </span>
+                                <span className={`px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-tighter ${
+                                  r.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'
+                                }`}>
+                                  {r.status}
+                                </span>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => handleDelete('demoRequests', r.id)}
+                              className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Feedback Section */}
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-emerald-600" />
+                      User Feedback
+                    </h3>
+                    <div className="space-y-4">
+                      {feedback.length === 0 ? (
+                        <p className="text-gray-400 italic">No feedback yet.</p>
+                      ) : (
+                        feedback.map((f) => (
+                          <div key={f.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start justify-between gap-4">
+                            <div>
+                              <h4 className="font-black text-gray-900">{f.name}</h4>
+                              <p className="text-gray-600 mt-1">{f.message}</p>
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">
+                                {f.createdAt?.toDate ? f.createdAt.toDate().toLocaleString() : 'Recent'}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleDelete('feedback', f.id)}
+                              className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Subscriptions Section */}
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                      <Mail className="w-5 h-5 text-amber-600" />
+                      Newsletter Subscriptions
+                    </h3>
+                    <div className="space-y-4">
+                      {subscriptions.length === 0 ? (
+                        <p className="text-gray-400 italic">No subscriptions yet.</p>
+                      ) : (
+                        subscriptions.map((s) => (
+                          <div key={s.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start justify-between gap-4">
+                            <div>
+                              <p className="font-bold text-gray-900">{s.email}</p>
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">
+                                Subscribed: {s.subscribedAt?.toDate ? s.subscribedAt.toDate().toLocaleString() : 'Recent'}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => handleDelete('newsletterSubscriptions', s.id)}
+                              className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'testimonials' && (
                 testimonials.length === 0 ? (
                   <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-gray-200">

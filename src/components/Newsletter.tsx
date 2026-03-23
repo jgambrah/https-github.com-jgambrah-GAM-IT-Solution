@@ -1,17 +1,36 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Send, CheckCircle2 } from 'lucide-react';
+import { Mail, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { db, collection, addDoc, serverTimestamp, handleFirestoreError, OperationType } from '../firebase';
 
 const Newsletter = () => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email) {
+    if (!email) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      await addDoc(collection(db, 'newsletterSubscriptions'), {
+        email,
+        subscribedAt: serverTimestamp(),
+        active: true
+      });
+
       setSubscribed(true);
       setEmail('');
       setTimeout(() => setSubscribed(false), 5000);
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, 'newsletterSubscriptions');
+      setError('Failed to subscribe. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -64,6 +83,12 @@ const Newsletter = () => {
             </div>
 
             <div className="relative">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2 text-red-600 text-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <p>{error}</p>
+                </div>
+              )}
               {subscribed ? (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }}
@@ -95,9 +120,10 @@ const Newsletter = () => {
                     />
                     <button
                       type="submit"
-                      className="absolute right-2 top-2 bottom-2 px-8 bg-indigo-600 text-white rounded-[1.5rem] font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200"
+                      disabled={loading}
+                      className="absolute right-2 top-2 bottom-2 px-8 bg-indigo-600 text-white rounded-[1.5rem] font-bold hover:bg-indigo-700 transition-all flex items-center gap-2 shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Subscribe <Send className="w-4 h-4" />
+                      {loading ? 'Subscribing...' : 'Subscribe'} <Send className="w-4 h-4" />
                     </button>
                   </div>
                   <p className="text-center text-sm text-gray-400">

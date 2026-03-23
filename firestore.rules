@@ -8,52 +8,34 @@ service cloud.firestore {
     // Collection: demoRequests
     // Document ID: auto-generated
     // Fields:
-    //   - firstName: string (required, 1-50 chars)
-    //   - lastName: string (required, 1-50 chars)
-    //   - email: string (required, valid email)
-    //   - product: string (required, enum: salesflow, leadgenius, insightdash)
+    //   - firstName: string (required, size < 100)
+    //   - lastName: string (required, size < 100)
+    //   - email: string (required, email format)
+    //   - product: string (required, enum)
+    //   - status: string (required, enum)
     //   - createdAt: timestamp (required)
-    //   - status: string (required, enum: pending, contacted, completed)
     //
     // Collection: feedback
     // Document ID: auto-generated
     // Fields:
-    //   - name: string (required, 1-100 chars)
-    //   - message: string (required, 1-2000 chars)
+    //   - name: string (required, size < 100)
+    //   - message: string (required, size < 5000)
     //   - createdAt: timestamp (required)
     //
-    // Collection: testimonials
+    // Collection: newsletterSubscriptions
     // Document ID: auto-generated
     // Fields:
-    //   - name: string (required, 1-100 chars)
-    //   - role: string (required, 1-100 chars)
-    //   - content: string (required, 1-2000 chars)
-    //   - avatar: string (required, valid URL)
-    //   - color: string (optional, 1-50 chars)
-    //   - createdAt: timestamp (required)
+    //   - email: string (required, email format)
+    //   - subscribedAt: timestamp (required)
+    //   - active: bool (required)
     //
-    // Collection: news
-    // Document ID: auto-generated
+    // Collection: users
+    // Document ID: Firebase Auth UID
     // Fields:
-    //   - title: string (required, 1-200 chars)
-    //   - content: string (required, 1-5000 chars)
-    //   - type: string (required, enum: text, image, video, youtube, instagram, tiktok)
-    //   - mediaUrl: string (optional, valid URL)
-    //   - author: string (optional, 1-100 chars)
-    //   - createdAt: timestamp (required)
-    //
-    // Collection: team
-    // Document ID: auto-generated
-    // Fields:
-    //   - name: string (required, 1-100 chars)
-    //   - role: string (required, 1-100 chars)
-    //   - bio: string (required, 1-5000 chars)
-    //   - avatar: string (required, valid URL)
-    //   - linkedin: string (optional, valid URL)
-    //   - github: string (optional, valid URL)
-    //   - kaggle: string (optional, valid URL)
-    //   - skills: list (optional, strings)
-    //   - order: int (optional)
+    //   - uid: string (required, matches doc ID)
+    //   - email: string (required, email format)
+    //   - displayName: string (optional, size < 100)
+    //   - role: string (required, enum: admin, user)
     //   - createdAt: timestamp (required)
     //
     // ===============================================================
@@ -61,26 +43,32 @@ service cloud.firestore {
     // ===============================================================
     // Helper Functions
     // ===============================================================
-    
+
     function isAuthenticated() {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
     function isAdmin() {
-      return isAuthenticated() && 
-        (
-          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
-          (request.auth.token.email == "jamesgambrah@gmail.com" && request.auth.token.email_verified == true)
-        );
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "jamesgambrah@gmail.com" && request.auth.token.email_verified == true));
     }
 
     function isValidEmail(email) {
-      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
     }
 
     function hasOnlyAllowedFields(fields) {
       return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
     }
 
     // ===============================================================
@@ -88,107 +76,129 @@ service cloud.firestore {
     // ===============================================================
 
     function isValidDemoRequest(data) {
-      return hasOnlyAllowedFields(['firstName', 'lastName', 'email', 'product', 'createdAt', 'status']) &&
-             data.firstName is string && data.firstName.size() >= 1 && data.firstName.size() <= 50 &&
-             data.lastName is string && data.lastName.size() >= 1 && data.lastName.size() <= 50 &&
+      return hasRequiredFields(['firstName', 'lastName', 'email', 'product', 'status', 'createdAt']) &&
+             hasOnlyAllowedFields(['firstName', 'lastName', 'email', 'product', 'status', 'createdAt']) &&
+             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 100 &&
+             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 100 &&
              isValidEmail(data.email) &&
-             data.product in ['salesflow', 'leadgenius', 'insightdash'] &&
-             data.createdAt is timestamp &&
-             data.status == 'pending';
+             data.product in ['gam-hub', 'gam-edu', 'gam-med', 'retail-os', 'hotel-intel', 'logistics-pro', 'fintech-vault'] &&
+             data.status in ['pending', 'contacted', 'completed', 'cancelled'] &&
+             data.createdAt is timestamp;
     }
 
     function isValidFeedback(data) {
-      return hasOnlyAllowedFields(['name', 'message', 'createdAt']) &&
-             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
-             data.message is string && data.message.size() >= 1 && data.message.size() <= 2000 &&
+      return hasRequiredFields(['name', 'message', 'createdAt']) &&
+             hasOnlyAllowedFields(['name', 'message', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 5000 &&
              data.createdAt is timestamp;
+    }
+
+    function isValidNewsletterSubscription(data) {
+      return hasRequiredFields(['email', 'subscribedAt', 'active']) &&
+             hasOnlyAllowedFields(['email', 'subscribedAt', 'active']) &&
+             isValidEmail(data.email) &&
+             data.subscribedAt is timestamp &&
+             data.active is bool;
+    }
+
+    function isValidUser(data) {
+      return hasRequiredFields(['uid', 'email', 'role', 'createdAt']) &&
+             hasOnlyAllowedFields(['uid', 'email', 'displayName', 'role', 'createdAt']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             isValidEmail(data.email) &&
+             data.role in ['admin', 'user'] &&
+             data.createdAt is timestamp &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100));
     }
 
     function isValidTestimonial(data) {
-      return hasOnlyAllowedFields(['name', 'role', 'content', 'avatar', 'color', 'createdAt']) &&
-             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
-             data.role is string && data.role.size() >= 1 && data.role.size() <= 100 &&
-             data.content is string && data.content.size() >= 1 && data.content.size() <= 2000 &&
-             data.avatar is string && data.avatar.size() >= 1 && data.avatar.size() <= 500 &&
-             (!('color' in data) || (data.color is string && data.color.size() >= 1 && data.color.size() <= 50)) &&
+      return hasRequiredFields(['name', 'role', 'content', 'avatar', 'color', 'createdAt']) &&
+             hasOnlyAllowedFields(['name', 'role', 'content', 'avatar', 'color', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
+             data.avatar is string && data.avatar.size() > 0 &&
+             data.color is string &&
              data.createdAt is timestamp;
     }
 
-    function isValidNews(data) {
-      return hasOnlyAllowedFields(['title', 'content', 'type', 'mediaUrl', 'author', 'createdAt']) &&
-             data.title is string && data.title.size() >= 1 && data.title.size() <= 200 &&
-             data.content is string && data.content.size() >= 1 && data.content.size() <= 5000 &&
+    function isValidNewsItem(data) {
+      return hasRequiredFields(['title', 'content', 'type', 'author', 'createdAt']) &&
+             hasOnlyAllowedFields(['title', 'content', 'type', 'mediaUrl', 'author', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
              data.type in ['text', 'image', 'video', 'youtube', 'instagram', 'tiktok'] &&
-             (!('mediaUrl' in data) || (data.mediaUrl is string && data.mediaUrl.size() >= 1 && data.mediaUrl.size() <= 1000)) &&
-             (!('author' in data) || (data.author is string && data.author.size() >= 1 && data.author.size() <= 100)) &&
-             data.createdAt is timestamp;
+             data.author is string && data.author.size() > 0 && data.author.size() < 100 &&
+             data.createdAt is timestamp &&
+             (!('mediaUrl' in data) || (data.mediaUrl is string && data.mediaUrl.size() > 0));
     }
 
     function isValidTeamMember(data) {
-      return hasOnlyAllowedFields(['name', 'role', 'bio', 'avatar', 'linkedin', 'github', 'kaggle', 'skills', 'order', 'createdAt']) &&
-             data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
-             data.role is string && data.role.size() >= 1 && data.role.size() <= 100 &&
-             data.bio is string && data.bio.size() >= 1 && data.bio.size() <= 5000 &&
-             data.avatar is string && data.avatar.size() >= 1 && data.avatar.size() <= 500 &&
-             (!('linkedin' in data) || (data.linkedin is string && data.linkedin.size() >= 1 && data.linkedin.size() <= 500)) &&
-             (!('github' in data) || (data.github is string && data.github.size() >= 1 && data.github.size() <= 500)) &&
-             (!('kaggle' in data) || (data.kaggle is string && data.kaggle.size() >= 1 && data.kaggle.size() <= 500)) &&
-             (!('skills' in data) || data.skills is list) &&
-             (!('order' in data) || data.order is int) &&
-             data.createdAt is timestamp;
+      return hasRequiredFields(['name', 'role', 'bio', 'avatar', 'order', 'createdAt']) &&
+             hasOnlyAllowedFields(['name', 'role', 'bio', 'avatar', 'linkedin', 'github', 'kaggle', 'skills', 'order', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
+             data.bio is string && data.bio.size() > 0 && data.bio.size() < 5000 &&
+             data.avatar is string && data.avatar.size() > 0 &&
+             data.order is int &&
+             data.createdAt is timestamp &&
+             (!('linkedin' in data) || data.linkedin is string) &&
+             (!('github' in data) || data.github is string) &&
+             (!('kaggle' in data) || data.kaggle is string) &&
+             (!('skills' in data) || data.skills is list);
     }
 
     // ===============================================================
     // Rules
     // ===============================================================
 
-    // Demo Requests: Anyone can create, only admins can read/update/delete
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
     match /demoRequests/{requestId} {
       allow create: if isValidDemoRequest(request.resource.data);
       allow read, update, delete: if isAdmin();
     }
 
-    // Feedback: Anyone can create, only admins can read/update/delete
     match /feedback/{feedbackId} {
       allow create: if isValidFeedback(request.resource.data);
       allow read, update, delete: if isAdmin();
     }
 
-    // Testimonials: Anyone can read, only admins can create/update/delete
+    match /newsletterSubscriptions/{subscriptionId} {
+      allow create: if isValidNewsletterSubscription(request.resource.data);
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
     match /testimonials/{testimonialId} {
       allow read: if true;
-      allow create, update: if isAdmin() && isValidTestimonial(request.resource.data);
+      allow create: if isAdmin() && isValidTestimonial(request.resource.data);
+      allow update: if isAdmin() && isValidTestimonial(request.resource.data);
       allow delete: if isAdmin();
     }
 
-    // News: Anyone can read, only admins can create/update/delete
     match /news/{newsId} {
       allow read: if true;
-      allow create, update: if isAdmin() && isValidNews(request.resource.data);
+      allow create: if isAdmin() && isValidNewsItem(request.resource.data);
+      allow update: if isAdmin() && isValidNewsItem(request.resource.data);
       allow delete: if isAdmin();
     }
 
-    // Team: Anyone can read, only admins can create/update/delete
     match /team/{memberId} {
       allow read: if true;
-      allow create, update: if isAdmin() && isValidTeamMember(request.resource.data);
+      allow create: if isAdmin() && isValidTeamMember(request.resource.data);
+      allow update: if isAdmin() && isValidTeamMember(request.resource.data);
       allow delete: if isAdmin();
-    }
-
-    // Explicitly allow listing the team collection
-    match /team {
-      allow read: if true;
-    }
-
-    // Users: Only admins can read/write, except users can read their own profile
-    match /users/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
-      allow write: if isAdmin();
-    }
-    
-    // Default deny
-    match /{document=**} {
-      allow read, write: if false;
     }
   }
 }
