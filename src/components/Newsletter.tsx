@@ -2,17 +2,26 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { db, collection, addDoc, serverTimestamp, handleFirestoreError, OperationType } from '../firebase';
+import { isValidEmail } from '../lib/utils';
 
 const Newsletter = () => {
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isEmailInvalid, setIsEmailInvalid] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
+    if (!isValidEmail(email)) {
+      setError('Please check your email address and enter a valid one.');
+      setIsEmailInvalid(true);
+      return;
+    }
+
+    setIsEmailInvalid(false);
     setLoading(true);
     setError(null);
 
@@ -114,9 +123,13 @@ const Newsletter = () => {
                       type="email"
                       required
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (isEmailInvalid) setIsEmailInvalid(false);
+                        if (error) setError(null);
+                      }}
                       placeholder="Enter your professional email"
-                      className="w-full px-8 py-6 rounded-[2rem] bg-gray-50 border border-gray-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-lg transition-all"
+                      className={`w-full px-8 py-6 rounded-[2rem] bg-gray-50 border ${isEmailInvalid ? 'border-red-500 ring-4 ring-red-100' : 'border-gray-200 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500'} outline-none text-lg transition-all`}
                     />
                     <button
                       type="submit"

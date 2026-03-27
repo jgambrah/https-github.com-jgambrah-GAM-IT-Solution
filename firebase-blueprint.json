@@ -155,6 +155,40 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["name", "role", "bio", "avatar", "order", "createdAt"]
+    },
+    "callback": {
+      "title": "Callback Request",
+      "description": "A request for a phone callback from a potential client.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The name of the person requesting a callback."
+        },
+        "phone": {
+          "type": "string",
+          "description": "The phone number to call."
+        },
+        "preferredTime": {
+          "type": "string",
+          "description": "The preferred time for the callback."
+        },
+        "message": {
+          "type": "string",
+          "description": "Any additional message or context."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the request.",
+          "enum": ["pending", "contacted", "completed", "cancelled"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the request was created."
+        }
+      },
+      "required": ["name", "phone", "preferredTime", "status", "createdAt"]
     }
   },
   "firestore": {
@@ -185,6 +219,10 @@
     "/team/{memberId}": {
       "schema": "teamMember",
       "description": "Collection of team members."
+    },
+    "/callbacks/{callbackId}": {
+      "schema": "callback",
+      "description": "Collection of callback requests."
     }
   }
 }

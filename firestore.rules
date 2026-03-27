@@ -38,6 +38,16 @@ service cloud.firestore {
     //   - role: string (required, enum: admin, user)
     //   - createdAt: timestamp (required)
     //
+    // Collection: callbacks
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required, size < 100)
+    //   - phone: string (required, size < 20)
+    //   - preferredTime: string (required, size < 100)
+    //   - message: string (optional, size < 1000)
+    //   - status: string (required, enum)
+    //   - createdAt: timestamp (required)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -149,6 +159,17 @@ service cloud.firestore {
              (!('skills' in data) || data.skills is list);
     }
 
+    function isValidCallback(data) {
+      return hasRequiredFields(['name', 'phone', 'preferredTime', 'status', 'createdAt']) &&
+             hasOnlyAllowedFields(['name', 'phone', 'preferredTime', 'message', 'status', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.phone is string && data.phone.size() > 0 && data.phone.size() < 50 &&
+             data.preferredTime is string && data.preferredTime.size() > 0 && data.preferredTime.size() < 100 &&
+             data.status in ['pending', 'contacted', 'completed', 'cancelled'] &&
+             data.createdAt is timestamp &&
+             (!('message' in data) || (data.message is string && data.message.size() < 1000));
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -199,6 +220,11 @@ service cloud.firestore {
       allow create: if isAdmin() && isValidTeamMember(request.resource.data);
       allow update: if isAdmin() && isValidTeamMember(request.resource.data);
       allow delete: if isAdmin();
+    }
+
+    match /callbacks/{callbackId} {
+      allow create: if isValidCallback(request.resource.data);
+      allow read, update, delete: if isAdmin();
     }
   }
 }

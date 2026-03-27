@@ -25,9 +25,22 @@ import {
   History
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const GamMed = () => {
   const featureCategories = [
+    {
+      title: "National Health Information Exchange (HIE)",
+      icon: <Share2 className="w-6 h-6" />,
+      items: [
+        "Longitudinal Clinical Continuity: Cross-network medical history",
+        "Single 'Clinical Truth' across multiple facilities",
+        "Ghana Card Global Identity: Universal anchor for patient records",
+        "Seamless cross-facility interoperability",
+        "Patient-Mediated Consent: Total Act 843 compliance",
+        "Digital 'Unlock' mechanism via private patient portal"
+      ]
+    },
     {
       title: "Clinical Excellence & EHR",
       icon: <Stethoscope className="w-6 h-6" />,
@@ -130,6 +143,11 @@ const GamMed = () => {
 
   return (
     <div className="pt-24 min-h-screen bg-white">
+      <SEO 
+        title="GamMed | Enterprise Hospital Operating System"
+        description="GamMed is a total hospital operating system engineered for the Ghanaian healthcare landscape. Features include clinical excellence EHR, financial governance ERP, and AI-powered clinical assistants."
+        keywords="hospital management system Ghana, EMR software, healthcare ERP, GamMed, digital health West Africa"
+      />
       {/* Hero Section */}
       <section className="bg-cyan-900 text-white py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">
@@ -147,7 +165,7 @@ const GamMed = () => {
               animate={{ opacity: 1, x: 0 }}
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-800/50 border border-cyan-700 text-cyan-200 text-sm font-medium mb-6">
-                <HeartPulse className="w-4 h-4" /> The Operating System for Modern Healthcare
+                <Zap className="w-4 h-4 text-yellow-400" /> New Feature Release: GamMed v2.0 "The Interoperability & Governance Update"
               </div>
               <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
                 GamMed: The Complete <span className="text-cyan-400">Hospital Enterprise</span> Ecosystem

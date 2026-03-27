@@ -25,7 +25,7 @@ async function startServer() {
       service: "gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        pass: process.env.EMAIL_PASS?.replace(/\s/g, ""),
       },
     });
 
@@ -49,6 +49,16 @@ async function startServer() {
         <p><strong>Message:</strong> ${data.message}</p>
         <p><strong>Received At:</strong> ${new Date().toLocaleString()}</p>
       `;
+    } else if (type === "callback") {
+      subject = `New Callback Request`;
+      htmlContent = `
+        <h2>New Callback Request</h2>
+        <p><strong>Name:</strong> ${data.name}</p>
+        <p><strong>Phone:</strong> ${data.phone}</p>
+        <p><strong>Preferred Time:</strong> ${data.preferredTime}</p>
+        <p><strong>Message:</strong> ${data.message || 'No message provided'}</p>
+        <p><strong>Requested At:</strong> ${new Date().toLocaleString()}</p>
+      `;
     }
 
     try {
@@ -68,10 +78,16 @@ async function startServer() {
       });
 
       res.status(200).json({ success: true, message: "Email sent successfully!" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error sending email:", error);
+      
+      let errorMessage = "Failed to send email notification.";
+      if (error.message && error.message.includes("534-5.7.9")) {
+        errorMessage = "Gmail requires an 'App Password' to send emails. Please check your configuration.";
+      }
+      
       // We still return 200 because the data is already saved to Firestore on the client side
-      res.status(500).json({ success: false, message: "Failed to send email notification." });
+      res.status(500).json({ success: false, message: errorMessage });
     }
   });
 

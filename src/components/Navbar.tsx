@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Menu, X, Laptop } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Menu, X, Laptop, Sun, Moon } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const isHome = location.pathname === '/';
 
   useEffect(() => {
@@ -45,22 +48,43 @@ const Navbar = () => {
               <Laptop className="w-6 h-6" />
             </div>
             <span className={`text-xl font-black tracking-tighter transition-colors duration-300 ${
-              scrolled || !isHome ? 'text-white' : 'text-gray-900'
+              scrolled || !isHome ? 'text-white' : 'text-gray-900 dark:text-white'
             }`}>
-              GAM IT <span className={scrolled || !isHome ? 'text-indigo-200' : 'text-indigo-600'}>Solutions</span>
+              GAM IT <span className={scrolled || !isHome ? 'text-indigo-200' : 'text-indigo-600 dark:text-indigo-400'}>Solutions</span>
             </span>
           </Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-6">
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-xl transition-all duration-300 hover:scale-110 ${
+                scrolled || !isHome 
+                  ? 'text-indigo-100 hover:text-white hover:bg-indigo-500/30' 
+                  : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+              }`}
+              aria-label="Toggle Theme"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.href}
+                onClick={(e) => {
+                  if (link.href.startsWith('#')) {
+                    e.preventDefault();
+                    const element = document.getElementById(link.href.slice(1));
+                    if (element) {
+                      element.scrollIntoView({ behavior: 'smooth' });
+                      navigate(link.href);
+                    }
+                  }
+                }}
                 className={`text-sm font-black uppercase tracking-widest transition-all duration-300 hover:scale-105 ${
                   scrolled || !isHome 
                     ? 'text-indigo-100 hover:text-white' 
-                    : 'text-gray-600 hover:text-indigo-600'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'
                 }`}
               >
                 {link.name}
@@ -76,11 +100,20 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className={`p-2 transition-colors ${
+                scrolled || !isHome ? 'text-white' : 'text-gray-600 dark:text-gray-300'
+              }`}
+              aria-label="Toggle Theme"
+            >
+              {theme === 'light' ? <Moon className="w-6 h-6" /> : <Sun className="w-6 h-6" />}
+            </button>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className={`p-2 transition-colors ${
-                scrolled || !isHome ? 'text-white' : 'text-gray-600'
+                scrolled || !isHome ? 'text-white' : 'text-gray-600 dark:text-gray-300'
               }`}
             >
               {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -99,7 +132,7 @@ const Navbar = () => {
             className={`md:hidden overflow-hidden border-t ${
               scrolled || !isHome 
                 ? 'bg-indigo-700 border-indigo-500/30' 
-                : 'bg-white border-gray-100'
+                : 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800'
             }`}
           >
             <div className="px-4 pt-2 pb-6 space-y-1">
@@ -107,11 +140,21 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   to={link.href}
-                  onClick={() => setIsOpen(false)}
+                  onClick={(e) => {
+                    setIsOpen(false);
+                    if (link.href.startsWith('#')) {
+                      e.preventDefault();
+                      const element = document.getElementById(link.href.slice(1));
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                        navigate(link.href);
+                      }
+                    }
+                  }}
                   className={`block px-3 py-4 text-sm font-black uppercase tracking-widest rounded-xl transition-all ${
                     scrolled || !isHome 
                       ? 'text-indigo-100 hover:text-white hover:bg-indigo-600' 
-                      : 'text-gray-600 hover:text-indigo-600 hover:bg-indigo-50'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-800'
                   }`}
                 >
                   {link.name}
@@ -121,7 +164,7 @@ const Navbar = () => {
                 <button className={`w-full px-6 py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all ${
                   scrolled || !isHome
                     ? 'bg-white text-indigo-600 hover:bg-indigo-50'
-                    : 'bg-gray-900 text-white hover:bg-gray-800'
+                    : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100'
                 }`}>
                   Login
                 </button>

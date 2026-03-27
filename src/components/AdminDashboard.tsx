@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { LogIn, Plus, Trash2, ShieldCheck, User, Users, LogOut, Newspaper, MessageSquare, Video, Image as ImageIcon, Youtube, Instagram, Music, Mail } from 'lucide-react';
+import { LogIn, Plus, Trash2, ShieldCheck, User, Users, LogOut, Newspaper, MessageSquare, Video, Image as ImageIcon, Youtube, Instagram, Music, Mail, Phone, AlertTriangle, X } from 'lucide-react';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import SEO from './SEO';
 
 const AdminDashboard = () => {
   const [user, setUser] = useState(auth.currentUser);
@@ -12,7 +13,20 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'testimonials' | 'news' | 'team' | 'contacts'>('testimonials');
   const [demoRequests, setDemoRequests] = useState<any[]>([]);
   const [feedback, setFeedback] = useState<any[]>([]);
+  const [callbacks, setCallbacks] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [itemToDelete, setItemToDelete] = useState<{ collection: string, id: string, label: string } | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const validateUrl = (url: string) => {
+    if (!url) return true; // Optional URLs are handled separately if required
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   useEffect(() => {
     console.log("Current Active Tab:", activeTab);
@@ -44,6 +58,7 @@ const AdminDashboard = () => {
   const [memberGithub, setMemberGithub] = useState('');
   const [memberKaggle, setMemberKaggle] = useState('');
   const [memberSkills, setMemberSkills] = useState('');
+  const [memberOrder, setMemberOrder] = useState('1');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -115,6 +130,15 @@ const AdminDashboard = () => {
         handleFirestoreError(error, OperationType.LIST, 'newsletterSubscriptions');
       });
 
+      // Callbacks listener
+      const qCallback = query(collection(db, 'callbacks'), orderBy('createdAt', 'desc'));
+      const unsubscribeCallback = onSnapshot(qCallback, (snapshot) => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setCallbacks(data);
+      }, (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'callbacks');
+      });
+
       return () => {
         unsubscribeT();
         unsubscribeN();
@@ -122,6 +146,7 @@ const AdminDashboard = () => {
         unsubscribeDemo();
         unsubscribeFeedback();
         unsubscribeSub();
+        unsubscribeCallback();
       };
     }
   }, [isAdmin]);
@@ -143,12 +168,24 @@ const AdminDashboard = () => {
     e.preventDefault();
     if (!isAdmin) return;
 
+    const errors: Record<string, string> = {};
+    if (!name.trim()) errors.name = 'Name is required';
+    if (!role.trim()) errors.role = 'Role is required';
+    if (!content.trim()) errors.content = 'Content is required';
+    if (!validateUrl(avatar)) errors.avatar = 'Invalid avatar URL format';
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
     try {
       await addDoc(collection(db, 'testimonials'), {
-        name,
-        role,
-        content,
-        avatar,
+        name: name.trim(),
+        role: role.trim(),
+        content: content.trim(),
+        avatar: avatar.trim(),
         color,
         createdAt: serverTimestamp()
       });
@@ -165,13 +202,32 @@ const AdminDashboard = () => {
     e.preventDefault();
     if (!isAdmin) return;
 
+    const errors: Record<string, string> = {};
+    if (!newsTitle.trim()) errors.newsTitle = 'Title is required';
+    if (!newsContent.trim()) errors.newsContent = 'Content is required';
+    if (!newsAuthor.trim()) errors.newsAuthor = 'Author is required';
+    
+    if (newsType !== 'text') {
+      if (!newsMediaUrl.trim()) {
+        errors.newsMediaUrl = 'Media URL is required for this type';
+      } else if (!validateUrl(newsMediaUrl)) {
+        errors.newsMediaUrl = 'Invalid media URL format';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
     try {
       await addDoc(collection(db, 'news'), {
-        title: newsTitle,
-        content: newsContent,
+        title: newsTitle.trim(),
+        content: newsContent.trim(),
         type: newsType,
-        mediaUrl: newsMediaUrl,
-        author: newsAuthor,
+        mediaUrl: newsType === 'text' ? '' : newsMediaUrl.trim(),
+        author: newsAuthor.trim(),
         createdAt: serverTimestamp()
       });
       setNewsTitle('');
@@ -186,17 +242,42 @@ const AdminDashboard = () => {
     e.preventDefault();
     if (!isAdmin) return;
 
+    const errors: Record<string, string> = {};
+    if (!memberName.trim()) errors.memberName = 'Name is required';
+    if (!memberRole.trim()) errors.memberRole = 'Role is required';
+    if (!memberBio.trim()) errors.memberBio = 'Bio is required';
+    if (!validateUrl(memberAvatar)) errors.memberAvatar = 'Invalid avatar URL format';
+    if (memberLinkedin && !validateUrl(memberLinkedin)) errors.memberLinkedin = 'Invalid LinkedIn URL format';
+    
+    const orderNum = parseInt(memberOrder);
+    if (isNaN(orderNum) || orderNum <= 0) {
+      errors.memberOrder = 'Order must be a positive integer';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
     try {
+      const skillsArray = Array.from(new Set(
+        memberSkills
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s !== '')
+      ));
+
       await addDoc(collection(db, 'team'), {
-        name: memberName,
-        role: memberRole,
-        bio: memberBio,
-        avatar: memberAvatar,
-        linkedin: memberLinkedin,
-        github: memberGithub,
-        kaggle: memberKaggle,
-        skills: memberSkills.split(',').map(s => s.trim()).filter(s => s !== ''),
-        order: team.length,
+        name: memberName.trim(),
+        role: memberRole.trim(),
+        bio: memberBio.trim(),
+        avatar: memberAvatar.trim(),
+        linkedin: memberLinkedin.trim(),
+        github: memberGithub.trim(),
+        kaggle: memberKaggle.trim(),
+        skills: skillsArray,
+        order: parseInt(memberOrder),
         createdAt: serverTimestamp()
       });
       setMemberName('');
@@ -206,6 +287,7 @@ const AdminDashboard = () => {
       setMemberGithub('');
       setMemberKaggle('');
       setMemberSkills('');
+      setMemberOrder((team.length + 2).toString());
     } catch (error) {
       handleFirestoreError(error, OperationType.CREATE, 'team');
     }
@@ -306,7 +388,7 @@ const AdminDashboard = () => {
           "Google AI Studio", "Vertex AI Platform", "VS Code", 
           "CLI Commands", "SQL", "Finance", "Accounting"
         ],
-        order: 0,
+        order: 1,
         createdAt: serverTimestamp()
       }
     ];
@@ -321,13 +403,18 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDelete = async (collectionName: string, id: string) => {
-    if (!isAdmin) return;
+  const handleDelete = async () => {
+    if (!isAdmin || !itemToDelete) return;
     try {
-      await deleteDoc(doc(db, collectionName, id));
+      await deleteDoc(doc(db, itemToDelete.collection, itemToDelete.id));
+      setItemToDelete(null);
     } catch (error) {
-      handleFirestoreError(error, OperationType.DELETE, `${collectionName}/${id}`);
+      handleFirestoreError(error, OperationType.DELETE, `${itemToDelete.collection}/${itemToDelete.id}`);
     }
+  };
+
+  const confirmDelete = (collectionName: string, id: string, label: string) => {
+    setItemToDelete({ collection: collectionName, id, label });
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
@@ -355,6 +442,11 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <SEO 
+        title="CEO Dashboard | Admin"
+        description="Administrative dashboard for GAM IT Solutions."
+        keywords="admin, dashboard, GAM IT Solutions"
+      />
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12">
           <div>
@@ -375,10 +467,53 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Quick Stats / Recent Activity */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                <Video className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Demos</span>
+            </div>
+            <p className="text-2xl font-black text-gray-900">{demoRequests.length}</p>
+          </div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Feedback</span>
+            </div>
+            <p className="text-2xl font-black text-gray-900">{feedback.length}</p>
+          </div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600">
+                <Phone className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Callbacks</span>
+            </div>
+            <p className="text-2xl font-black text-gray-900">{callbacks.length}</p>
+          </div>
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                <Mail className="w-5 h-5" />
+              </div>
+              <span className="text-xs font-black text-gray-400 uppercase tracking-widest">Subscribers</span>
+            </div>
+            <p className="text-2xl font-black text-gray-900">{subscriptions.length}</p>
+          </div>
+        </div>
+
         {/* Tabs */}
         <div className="flex flex-wrap gap-4 mb-8">
           <button
-            onClick={() => setActiveTab('testimonials')}
+            onClick={() => {
+              setActiveTab('testimonials');
+              setFormErrors({});
+            }}
             className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
               activeTab === 'testimonials' 
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
@@ -389,7 +524,10 @@ const AdminDashboard = () => {
             Testimony
           </button>
           <button
-            onClick={() => setActiveTab('news')}
+            onClick={() => {
+              setActiveTab('news');
+              setFormErrors({});
+            }}
             className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
               activeTab === 'news' 
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
@@ -400,7 +538,10 @@ const AdminDashboard = () => {
             News and Update
           </button>
           <button
-            onClick={() => setActiveTab('team')}
+            onClick={() => {
+              setActiveTab('team');
+              setFormErrors({});
+            }}
             className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
               activeTab === 'team' 
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
@@ -411,7 +552,10 @@ const AdminDashboard = () => {
             Team
           </button>
           <button
-            onClick={() => setActiveTab('contacts')}
+            onClick={() => {
+              setActiveTab('contacts');
+              setFormErrors({});
+            }}
             className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-bold transition-all ${
               activeTab === 'contacts' 
               ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
@@ -422,6 +566,48 @@ const AdminDashboard = () => {
             Contacts
           </button>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {itemToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden"
+            >
+              <button 
+                onClick={() => setItemToDelete(null)}
+                className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="w-16 h-16 bg-red-50 rounded-2xl flex items-center justify-center text-red-600 mb-6">
+                <AlertTriangle className="w-8 h-8" />
+              </div>
+
+              <h3 className="text-2xl font-black text-gray-900 mb-2">Confirm Deletion</h3>
+              <p className="text-gray-600 mb-8 leading-relaxed">
+                Are you sure you want to delete <span className="font-bold text-gray-900">"{itemToDelete.label}"</span>? This action cannot be undone.
+              </p>
+
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setItemToDelete(null)}
+                  className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-black hover:bg-gray-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-black hover:bg-red-700 transition-all shadow-xl shadow-red-100"
+                >
+                  Delete Now
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form Column */}
@@ -440,10 +626,14 @@ const AdminDashboard = () => {
                         type="text"
                         required
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          if (formErrors.name) setFormErrors(prev => ({ ...prev, name: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.name ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
                         placeholder="e.g. Dr. Emmanuel Mensah"
                       />
+                      {formErrors.name && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.name}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Role / Title</label>
@@ -451,21 +641,43 @@ const AdminDashboard = () => {
                         type="text"
                         required
                         value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        onChange={(e) => {
+                          setRole(e.target.value);
+                          if (formErrors.role) setFormErrors(prev => ({ ...prev, role: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.role ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
                         placeholder="e.g. Medical Director"
                       />
+                      {formErrors.role && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.role}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Content</label>
                       <textarea
                         required
                         value={content}
-                        onChange={(e) => setContent(e.target.value)}
+                        onChange={(e) => {
+                          setContent(e.target.value);
+                          if (formErrors.content) setFormErrors(prev => ({ ...prev, content: '' }));
+                        }}
                         rows={4}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium resize-none"
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.content ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium resize-none`}
                         placeholder="What did they say?"
                       />
+                      {formErrors.content && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.content}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Avatar URL</label>
+                      <input
+                        type="url"
+                        value={avatar}
+                        onChange={(e) => {
+                          setAvatar(e.target.value);
+                          if (formErrors.avatar) setFormErrors(prev => ({ ...prev, avatar: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.avatar ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
+                        placeholder="https://picsum.photos/seed/user/100/100"
+                      />
+                      {formErrors.avatar && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.avatar}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Card Color</label>
@@ -511,21 +723,29 @@ const AdminDashboard = () => {
                         type="text"
                         required
                         value={newsTitle}
-                        onChange={(e) => setNewsTitle(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        onChange={(e) => {
+                          setNewsTitle(e.target.value);
+                          if (formErrors.newsTitle) setFormErrors(prev => ({ ...prev, newsTitle: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.newsTitle ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
                         placeholder="e.g. New Tech Launch"
                       />
+                      {formErrors.newsTitle && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.newsTitle}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Content</label>
                       <textarea
                         required
                         value={newsContent}
-                        onChange={(e) => setNewsContent(e.target.value)}
+                        onChange={(e) => {
+                          setNewsContent(e.target.value);
+                          if (formErrors.newsContent) setFormErrors(prev => ({ ...prev, newsContent: '' }));
+                        }}
                         rows={4}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium resize-none"
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.newsContent ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium resize-none`}
                         placeholder="Share the details..."
                       />
+                      {formErrors.newsContent && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.newsContent}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Media Type</label>
@@ -549,10 +769,14 @@ const AdminDashboard = () => {
                           type="url"
                           required
                           value={newsMediaUrl}
-                          onChange={(e) => setNewsMediaUrl(e.target.value)}
-                          className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                          onChange={(e) => {
+                            setNewsMediaUrl(e.target.value);
+                            if (formErrors.newsMediaUrl) setFormErrors(prev => ({ ...prev, newsMediaUrl: '' }));
+                          }}
+                          className={`w-full px-4 py-3 rounded-xl border ${formErrors.newsMediaUrl ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
                           placeholder="Paste URL here..."
                         />
+                        {formErrors.newsMediaUrl && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.newsMediaUrl}</p>}
                       </div>
                     )}
                     <div>
@@ -561,9 +785,13 @@ const AdminDashboard = () => {
                         type="text"
                         required
                         value={newsAuthor}
-                        onChange={(e) => setNewsAuthor(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        onChange={(e) => {
+                          setNewsAuthor(e.target.value);
+                          if (formErrors.newsAuthor) setFormErrors(prev => ({ ...prev, newsAuthor: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.newsAuthor ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
                       />
+                      {formErrors.newsAuthor && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.newsAuthor}</p>}
                     </div>
                     <button
                       type="submit"
@@ -594,10 +822,14 @@ const AdminDashboard = () => {
                         type="text"
                         required
                         value={memberName}
-                        onChange={(e) => setMemberName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        onChange={(e) => {
+                          setMemberName(e.target.value);
+                          if (formErrors.memberName) setFormErrors(prev => ({ ...prev, memberName: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberName ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
                         placeholder="e.g. Dr. James Gambrah"
                       />
+                      {formErrors.memberName && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberName}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Role</label>
@@ -605,21 +837,43 @@ const AdminDashboard = () => {
                         type="text"
                         required
                         value={memberRole}
-                        onChange={(e) => setMemberRole(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        onChange={(e) => {
+                          setMemberRole(e.target.value);
+                          if (formErrors.memberRole) setFormErrors(prev => ({ ...prev, memberRole: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberRole ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
                         placeholder="e.g. CEO & Founder"
                       />
+                      {formErrors.memberRole && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberRole}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Bio / Statement</label>
                       <textarea
                         required
                         value={memberBio}
-                        onChange={(e) => setMemberBio(e.target.value)}
+                        onChange={(e) => {
+                          setMemberBio(e.target.value);
+                          if (formErrors.memberBio) setFormErrors(prev => ({ ...prev, memberBio: '' }));
+                        }}
                         rows={4}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium resize-none"
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberBio ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium resize-none`}
                         placeholder="Brief bio..."
                       />
+                      {formErrors.memberBio && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberBio}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Avatar URL</label>
+                      <input
+                        type="url"
+                        value={memberAvatar}
+                        onChange={(e) => {
+                          setMemberAvatar(e.target.value);
+                          if (formErrors.memberAvatar) setFormErrors(prev => ({ ...prev, memberAvatar: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberAvatar ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
+                        placeholder="https://picsum.photos/seed/ceo/200/200"
+                      />
+                      {formErrors.memberAvatar && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberAvatar}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Skills (comma separated)</label>
@@ -636,9 +890,49 @@ const AdminDashboard = () => {
                       <input
                         type="text"
                         value={memberLinkedin}
-                        onChange={(e) => setMemberLinkedin(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        onChange={(e) => {
+                          setMemberLinkedin(e.target.value);
+                          if (formErrors.memberLinkedin) setFormErrors(prev => ({ ...prev, memberLinkedin: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberLinkedin ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
+                        placeholder="linkedin.com/in/username"
                       />
+                      {formErrors.memberLinkedin && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberLinkedin}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">GitHub Username</label>
+                      <input
+                        type="text"
+                        value={memberGithub}
+                        onChange={(e) => setMemberGithub(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        placeholder="github_username"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Kaggle Username</label>
+                      <input
+                        type="text"
+                        value={memberKaggle}
+                        onChange={(e) => setMemberKaggle(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        placeholder="kaggle_username"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Display Order (Positive Integer)</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={memberOrder}
+                        onChange={(e) => {
+                          setMemberOrder(e.target.value);
+                          if (formErrors.memberOrder) setFormErrors(prev => ({ ...prev, memberOrder: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberOrder ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
+                        placeholder="1"
+                      />
+                      {formErrors.memberOrder && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberOrder}</p>}
                     </div>
                     <button
                       type="submit"
@@ -670,6 +964,10 @@ const AdminDashboard = () => {
                     <div className="bg-emerald-50 p-6 rounded-2xl">
                       <p className="text-xs font-black text-emerald-400 uppercase tracking-widest mb-1">Feedback</p>
                       <p className="text-3xl font-black text-emerald-600">{feedback.length}</p>
+                    </div>
+                    <div className="bg-rose-50 p-6 rounded-2xl">
+                      <p className="text-xs font-black text-rose-400 uppercase tracking-widest mb-1">Callbacks</p>
+                      <p className="text-3xl font-black text-rose-600">{callbacks.length}</p>
                     </div>
                     <div className="bg-amber-50 p-6 rounded-2xl">
                       <p className="text-xs font-black text-amber-400 uppercase tracking-widest mb-1">Subscribers</p>
@@ -713,7 +1011,7 @@ const AdminDashboard = () => {
                               </div>
                             </div>
                             <button
-                              onClick={() => handleDelete('demoRequests', r.id)}
+                              onClick={() => confirmDelete('demoRequests', r.id, `Demo request from ${r.firstName} ${r.lastName}`)}
                               className="p-2 text-gray-300 hover:text-red-600 transition-colors"
                             >
                               <Trash2 className="w-5 h-5" />
@@ -744,7 +1042,40 @@ const AdminDashboard = () => {
                               </p>
                             </div>
                             <button
-                              onClick={() => handleDelete('feedback', f.id)}
+                              onClick={() => confirmDelete('feedback', f.id, `Feedback from ${f.name}`)}
+                              className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Callbacks Section */}
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 mb-4 flex items-center gap-2">
+                      <Phone className="w-5 h-5 text-rose-600" />
+                      Callback Requests
+                    </h3>
+                    <div className="space-y-4">
+                      {callbacks.length === 0 ? (
+                        <p className="text-gray-400 italic">No callback requests yet.</p>
+                      ) : (
+                        callbacks.map((c) => (
+                          <div key={c.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start justify-between gap-4">
+                            <div>
+                              <h4 className="font-black text-gray-900">{c.name}</h4>
+                              <p className="text-sm text-rose-600 font-bold">{c.phone}</p>
+                              <p className="text-sm text-gray-600 mt-1"><strong>Time:</strong> {c.preferredTime}</p>
+                              {c.message && <p className="text-sm text-gray-500 mt-1 italic">"{c.message}"</p>}
+                              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-2">
+                                {c.createdAt?.toDate ? c.createdAt.toDate().toLocaleString() : 'Recent'}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => confirmDelete('callbacks', c.id, `Callback request from ${c.name}`)}
                               className="p-2 text-gray-300 hover:text-red-600 transition-colors"
                             >
                               <Trash2 className="w-5 h-5" />
@@ -774,7 +1105,7 @@ const AdminDashboard = () => {
                               </p>
                             </div>
                             <button
-                              onClick={() => handleDelete('newsletterSubscriptions', s.id)}
+                              onClick={() => confirmDelete('newsletterSubscriptions', s.id, `Subscription for ${s.email}`)}
                               className="p-2 text-gray-300 hover:text-red-600 transition-colors"
                             >
                               <Trash2 className="w-5 h-5" />
@@ -808,7 +1139,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleDelete('testimonials', t.id)}
+                        onClick={() => confirmDelete('testimonials', t.id, `Testimonial from ${t.name}`)}
                         className="p-2 text-gray-300 hover:text-red-600 transition-colors"
                       >
                         <Trash2 className="w-6 h-6" />
@@ -871,7 +1202,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleDelete('news', n.id)}
+                        onClick={() => confirmDelete('news', n.id, `News post: ${n.title}`)}
                         className="p-2 text-gray-300 hover:text-red-600 transition-colors"
                       >
                         <Trash2 className="w-6 h-6" />
@@ -906,7 +1237,7 @@ const AdminDashboard = () => {
                         </div>
                       </div>
                       <button
-                        onClick={() => handleDelete('team', member.id)}
+                        onClick={() => confirmDelete('team', member.id, `Team member: ${member.name}`)}
                         className="p-2 text-gray-300 hover:text-red-600 transition-colors"
                       >
                         <Trash2 className="w-6 h-6" />

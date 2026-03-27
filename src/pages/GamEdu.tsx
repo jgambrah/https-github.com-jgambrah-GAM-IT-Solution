@@ -22,6 +22,7 @@ import {
   Smartphone as MobileIcon
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const GamEdu = () => {
   const features = [
@@ -107,6 +108,11 @@ const GamEdu = () => {
 
   return (
     <div className="pt-24 min-h-screen bg-white">
+      <SEO 
+        title="GAM Edu | Intelligent School Management System"
+        description="GAM Edu is an AI-powered School Management System built for the West African education ecosystem. Features include smart financial management, academic excellence tools, and AI-powered assistants."
+        keywords="school management system, educational software Ghana, GAM Edu, AI in education, West Africa education technology"
+      />
       {/* Hero Section */}
       <section className="bg-indigo-900 text-white py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10">

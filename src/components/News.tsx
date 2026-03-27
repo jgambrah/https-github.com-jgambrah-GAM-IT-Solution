@@ -1,12 +1,67 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { Newspaper, Video, Image as ImageIcon, Youtube, Instagram, Music, Calendar, User, ExternalLink } from 'lucide-react';
+import { Newspaper, Video, Image as ImageIcon, Youtube, Instagram, Music, Calendar, User, ExternalLink, Share2, Check, Twitter, Facebook, Linkedin, Mail, X } from 'lucide-react';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 const News = () => {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [activeShareId, setActiveShareId] = useState<string | null>(null);
+
+  const handleShare = async (item: any, platform?: string) => {
+    const shareUrl = window.location.href;
+    const shareText = `${item.title}\n\n${item.content}\n\n`;
+    
+    if (platform) {
+      let url = '';
+      switch (platform) {
+        case 'twitter':
+          url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(item.title)}&url=${encodeURIComponent(shareUrl)}`;
+          break;
+        case 'facebook':
+          url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+          break;
+        case 'linkedin':
+          url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`;
+          break;
+        case 'email':
+          url = `mailto:?subject=${encodeURIComponent(item.title)}&body=${encodeURIComponent(shareText + shareUrl)}`;
+          break;
+      }
+      if (url) window.open(url, '_blank');
+      setActiveShareId(null);
+      return;
+    }
+
+    const shareData = {
+      title: item.title,
+      text: item.content,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback: Toggle custom share menu
+        setActiveShareId(activeShareId === item.id ? null : item.id);
+      }
+    } catch (err) {
+      setActiveShareId(activeShareId === item.id ? null : item.id);
+    }
+  };
+
+  const copyToClipboard = async (item: any) => {
+    try {
+      await navigator.clipboard.writeText(`${item.title}\n\n${item.content}\n\n${window.location.href}`);
+      setCopiedId(item.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'news'), orderBy('createdAt', 'desc'));
@@ -170,9 +225,75 @@ const News = () => {
                   }`}>
                     {item.type}
                   </span>
-                  <button className="text-indigo-600 font-black text-sm flex items-center gap-2 group/btn">
-                    Read More <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                  </button>
+                  <div className="flex items-center gap-2 relative">
+                    {activeShareId === item.id && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        className="absolute bottom-full right-0 mb-4 bg-white rounded-2xl shadow-2xl border border-gray-100 p-3 flex items-center gap-2 z-50"
+                      >
+                        <button 
+                          onClick={() => handleShare(item, 'twitter')}
+                          className="p-2 hover:bg-blue-50 text-blue-400 rounded-xl transition-colors"
+                          title="Share on Twitter"
+                        >
+                          <Twitter className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => handleShare(item, 'facebook')}
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-xl transition-colors"
+                          title="Share on Facebook"
+                        >
+                          <Facebook className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => handleShare(item, 'linkedin')}
+                          className="p-2 hover:bg-blue-50 text-blue-700 rounded-xl transition-colors"
+                          title="Share on LinkedIn"
+                        >
+                          <Linkedin className="w-5 h-5" />
+                        </button>
+                        <button 
+                          onClick={() => handleShare(item, 'email')}
+                          className="p-2 hover:bg-gray-50 text-gray-600 rounded-xl transition-colors"
+                          title="Share via Email"
+                        >
+                          <Mail className="w-5 h-5" />
+                        </button>
+                        <div className="w-px h-6 bg-gray-100 mx-1" />
+                        <button 
+                          onClick={() => copyToClipboard(item)}
+                          className="p-2 hover:bg-gray-50 text-gray-400 rounded-xl transition-colors"
+                          title="Copy Link"
+                        >
+                          {copiedId === item.id ? <Check className="w-5 h-5 text-green-500" /> : <ExternalLink className="w-5 h-5" />}
+                        </button>
+                        <button 
+                          onClick={() => setActiveShareId(null)}
+                          className="p-2 hover:bg-red-50 text-red-400 rounded-xl transition-colors"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </motion.div>
+                    )}
+                    <button 
+                      onClick={() => handleShare(item)}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-indigo-600 relative group/share"
+                      title="Share this news"
+                    >
+                      {copiedId === item.id ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Share2 className="w-4 h-4" />
+                      )}
+                      <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/share:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                        {copiedId === item.id ? 'Copied!' : 'Share News'}
+                      </span>
+                    </button>
+                    <button className="text-indigo-600 font-black text-sm flex items-center gap-2 group/btn">
+                      Read More <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
                 </div>
               </motion.article>
             ))}

@@ -21,10 +21,16 @@ import AdminDashboard from './components/AdminDashboard';
 import ChatBot from './components/ChatBot';
 import GamEdu from './pages/GamEdu';
 import GamMed from './pages/GamMed';
+import SEO from './components/SEO';
 import { Laptop, Mail, Phone, MapPin, Twitter, Linkedin, Github, Users } from 'lucide-react';
 
 const HomePage = () => (
   <>
+    <SEO 
+      title="GAM IT Solutions | Leading Digital Transformation in Ghana"
+      description="Empowering Ghana through institutional digital infrastructure, healthcare intelligence, and national-scale technological advancements. Explore our solutions like GAM Hub, GAM Edu, and GAM Med."
+      keywords="IT solutions Ghana, digital infrastructure, healthcare software, educational software, GAM Hub, GAM Edu, GAM Med, software development Ghana"
+    />
     <Hero />
     <ImageMarquee />
     <About />

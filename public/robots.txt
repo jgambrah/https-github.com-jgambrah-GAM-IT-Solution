@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /ceo-dashboard
+
+Sitemap: https://gamitsolutions.com/sitemap.xml
