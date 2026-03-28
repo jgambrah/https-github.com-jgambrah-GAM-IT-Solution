@@ -35,6 +35,16 @@ const AppsGrid = () => {
       demoLink: "https://gam-med.vercel.app/",
       external: false,
     },
+    {
+      id: "gam-shop",
+      name: "GAM Shop",
+      tagline: "SmartPOS: Enterprise-Grade Retail Management.",
+      description: "A powerful, multi-branch Point of Sale and Inventory solution built for scale, precision, and real-time business intelligence.",
+      color: "bg-orange-600",
+      link: "/apps/gam-shop",
+      demoLink: "https://https-github-com-jgambrah-gam-shop.vercel.app/",
+      external: false,
+    },
   ];
 
   return (
@@ -137,7 +147,7 @@ const AppsGrid = () => {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { name: "Retail OS", icon: "🛍️" },
+              { name: "Agro Intelligence", icon: "🌾" },
               { name: "Hotel Intelligence", icon: "🏨" },
               { name: "Logistics Pro", icon: "🚚" },
               { name: "FinTech Vault", icon: "💰" },

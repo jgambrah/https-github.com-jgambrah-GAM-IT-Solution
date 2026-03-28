@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { LogIn, Plus, Trash2, ShieldCheck, User, Users, LogOut, Newspaper, MessageSquare, Video, Image as ImageIcon, Youtube, Instagram, Music, Mail, Phone, AlertTriangle, X } from 'lucide-react';
+import { LogIn, Plus, Trash2, ShieldCheck, User, Users, LogOut, Newspaper, MessageSquare, Video, Image as ImageIcon, Youtube, Instagram, Music, Mail, Phone, AlertTriangle, X, Search } from 'lucide-react';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 import SEO from './SEO';
 
@@ -28,6 +28,12 @@ const AdminDashboard = () => {
     }
   };
 
+  const getYouTubeEmbedUrl = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+  };
+
   useEffect(() => {
     console.log("Current Active Tab:", activeTab);
   }, [activeTab]);
@@ -47,6 +53,8 @@ const AdminDashboard = () => {
   const [newsType, setNewsType] = useState('text');
   const [newsMediaUrl, setNewsMediaUrl] = useState('');
   const [newsAuthor, setNewsAuthor] = useState('James Gambrah');
+  const [newsFilter, setNewsFilter] = useState<string>('all');
+  const [newsSearch, setNewsSearch] = useState('');
 
   // Team state
   const [team, setTeam] = useState<any[]>([]);
@@ -248,6 +256,7 @@ const AdminDashboard = () => {
     if (!memberBio.trim()) errors.memberBio = 'Bio is required';
     if (!validateUrl(memberAvatar)) errors.memberAvatar = 'Invalid avatar URL format';
     if (memberLinkedin && !validateUrl(memberLinkedin)) errors.memberLinkedin = 'Invalid LinkedIn URL format';
+    if (!memberSkills.trim()) errors.memberSkills = 'Skills are required (comma separated)';
     
     const orderNum = parseInt(memberOrder);
     if (isNaN(orderNum) || orderNum <= 0) {
@@ -777,6 +786,31 @@ const AdminDashboard = () => {
                           placeholder="Paste URL here..."
                         />
                         {formErrors.newsMediaUrl && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.newsMediaUrl}</p>}
+                        
+                        {newsMediaUrl && !formErrors.newsMediaUrl && (
+                          <div className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden">
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Media Preview</p>
+                            {newsType === 'image' && (
+                              <img src={newsMediaUrl} alt="Preview" className="max-h-64 w-full object-contain rounded-xl shadow-sm" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                            )}
+                            {newsType === 'video' && (
+                              <video src={newsMediaUrl} controls className="max-h-64 w-full rounded-xl shadow-sm" />
+                            )}
+                            {newsType === 'youtube' && getYouTubeEmbedUrl(newsMediaUrl) && (
+                              <iframe
+                                src={getYouTubeEmbedUrl(newsMediaUrl)!}
+                                className="w-full aspect-video rounded-xl shadow-sm"
+                                allowFullScreen
+                              />
+                            )}
+                            {(newsType === 'instagram' || newsType === 'tiktok') && (
+                              <div className="p-8 text-center bg-white rounded-xl border border-dashed border-gray-200">
+                                <p className="text-xs text-gray-400 font-bold italic">Live preview not available for {newsType}.</p>
+                                <a href={newsMediaUrl} target="_blank" rel="noopener noreferrer" className="text-[10px] text-indigo-600 font-black uppercase mt-2 inline-block">Verify Link</a>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                     <div>
@@ -880,10 +914,14 @@ const AdminDashboard = () => {
                       <input
                         type="text"
                         value={memberSkills}
-                        onChange={(e) => setMemberSkills(e.target.value)}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium"
+                        onChange={(e) => {
+                          setMemberSkills(e.target.value);
+                          if (formErrors.memberSkills) setFormErrors(prev => ({ ...prev, memberSkills: '' }));
+                        }}
+                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberSkills ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
                         placeholder="AI, Finance, ML..."
                       />
+                      {formErrors.memberSkills && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberSkills}</p>}
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">LinkedIn URL</label>
@@ -1150,14 +1188,63 @@ const AdminDashboard = () => {
               )}
 
               {activeTab === 'news' && (
-                news.length === 0 ? (
-                  <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-gray-200">
-                    <Newspaper className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-                    <p className="text-gray-400 font-bold italic">No news updates yet.</p>
+                <div className="mb-8 space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search news by title or content..."
+                      value={newsSearch}
+                      onChange={(e) => setNewsSearch(e.target.value)}
+                      className="w-full pl-12 pr-4 py-3 bg-white rounded-2xl border border-gray-100 focus:ring-2 focus:ring-indigo-500 outline-none font-medium shadow-sm transition-all"
+                    />
+                    {newsSearch && (
+                      <button 
+                        onClick={() => setNewsSearch('')}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <X className="w-3 h-3 text-gray-400" />
+                      </button>
+                    )}
                   </div>
-                ) : (
-                  news.map((n) => (
-                    <div key={n.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start justify-between gap-4 group hover:shadow-md transition-all">
+                  <div className="flex flex-wrap gap-2">
+                    {['all', 'text', 'image', 'video', 'youtube', 'instagram', 'tiktok'].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setNewsFilter(type)}
+                        className={`px-4 py-2 rounded-2xl text-xs font-black uppercase tracking-widest transition-all ${
+                          newsFilter === type 
+                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' 
+                            : 'bg-white text-gray-400 hover:bg-gray-50 border border-gray-100'
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'news' && (
+                (() => {
+                  const filteredNews = news.filter(n => {
+                    const matchesType = newsFilter === 'all' || n.type === newsFilter;
+                    const matchesSearch = (n.title?.toLowerCase() || '').includes(newsSearch.toLowerCase()) || 
+                                          (n.content?.toLowerCase() || '').includes(newsSearch.toLowerCase());
+                    return matchesType && matchesSearch;
+                  });
+                  return filteredNews.length === 0 ? (
+                    <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-gray-200">
+                      <Newspaper className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                      <p className="text-gray-400 font-bold italic">
+                        {newsSearch 
+                          ? `No results found for "${newsSearch}"`
+                          : (newsFilter === 'all' ? 'No news updates yet.' : `No ${newsFilter} updates yet.`)}
+                      </p>
+                    </div>
+                  ) : (
+                    filteredNews.map((n) => (
+                      <div key={n.id} className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-start justify-between gap-4 group hover:shadow-md transition-all">
                       <div className="flex gap-6 w-full">
                         {n.type === 'image' && (
                           <img src={n.mediaUrl} alt={n.title} className="w-24 h-24 rounded-2xl object-cover shadow-sm" />
@@ -1209,10 +1296,11 @@ const AdminDashboard = () => {
                       </button>
                     </div>
                   ))
-                )
-              )}
+                );
+              })()
+            )}
 
-              {activeTab === 'team' && (
+            {activeTab === 'team' && (
                 team.length === 0 ? (
                   <div className="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-gray-200">
                     <Users className="w-16 h-16 text-gray-200 mx-auto mb-4" />
