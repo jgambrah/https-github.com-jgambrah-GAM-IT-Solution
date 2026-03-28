@@ -41,9 +41,9 @@ const AppsGrid = () => {
       tagline: "SmartPOS: Enterprise-Grade Retail Management.",
       description: "A powerful, multi-branch Point of Sale and Inventory solution built for scale, precision, and real-time business intelligence.",
       color: "bg-orange-600",
-      link: "/apps/gam-shop",
-      demoLink: "https://https-github-com-jgambrah-gam-shop.vercel.app/",
-      external: false,
+      link: "https://gam-shop-359057282274.us-west1.run.app/",
+      demoLink: "https://gam-shop-359057282274.us-west1.run.app/",
+      external: true,
     },
   ];
 
