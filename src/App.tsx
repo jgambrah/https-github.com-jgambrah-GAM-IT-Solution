@@ -19,6 +19,7 @@ import Newsletter from './components/Newsletter';
 import Footer from './components/Footer';
 import AdminDashboard from './components/AdminDashboard';
 import ChatBot from './components/ChatBot';
+import GamHub from './pages/GamHub';
 import GamEdu from './pages/GamEdu';
 import GamMed from './pages/GamMed';
 import GamShop from './pages/GamShop';
@@ -73,6 +74,7 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/apps/gam-hub" element={<GamHub />} />
           <Route path="/apps/gam-edu" element={<GamEdu />} />
           <Route path="/apps/gam-med" element={<GamMed />} />
           <Route path="/apps/gam-shop" element={<GamShop />} />

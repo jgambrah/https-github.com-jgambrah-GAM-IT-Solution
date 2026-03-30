@@ -11,9 +11,9 @@ const AppsGrid = () => {
       tagline: "The National Infrastructure of Ghana.",
       description: "A definitive national hub featuring The Market (Escrow Commerce), The Arena (AI-Refereed Combat), and Ghana Pulse (Social Media).",
       color: "bg-indigo-600",
-      link: "https://gam-hub.vercel.app/",
+      link: "/apps/gam-hub",
       demoLink: "https://gam-hub.vercel.app/",
-      external: true,
+      external: false,
     },
     {
       id: "gam-edu",
@@ -41,9 +41,9 @@ const AppsGrid = () => {
       tagline: "SmartPOS: Enterprise-Grade Retail Management.",
       description: "A powerful, multi-branch Point of Sale and Inventory solution built for scale, precision, and real-time business intelligence.",
       color: "bg-orange-600",
-      link: "https://gam-shop-359057282274.us-west1.run.app/",
+      link: "/apps/gam-shop",
       demoLink: "https://gam-shop-359057282274.us-west1.run.app/",
-      external: true,
+      external: false,
     },
   ];
 
