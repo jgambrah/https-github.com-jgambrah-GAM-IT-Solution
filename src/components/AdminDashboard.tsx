@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
-import { LogIn, Plus, Trash2, ShieldCheck, User, Users, LogOut, Newspaper, MessageSquare, Video, Image as ImageIcon, Youtube, Instagram, Music, Mail, Phone, AlertTriangle, X, Search } from 'lucide-react';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { LogIn, Plus, Trash2, ShieldCheck, User, Users, LogOut, Newspaper, MessageSquare, Video, Image as ImageIcon, Youtube, Instagram, Music, Mail, Phone, AlertTriangle, X, Search, Edit2, Upload } from 'lucide-react';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
 import SEO from './SEO';
 
@@ -67,6 +67,8 @@ const AdminDashboard = () => {
   const [memberKaggle, setMemberKaggle] = useState('');
   const [memberSkills, setMemberSkills] = useState('');
   const [memberOrder, setMemberOrder] = useState('1');
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [teamImagePreview, setTeamImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -246,6 +248,39 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 700000) { // ~700KB limit for base64 in Firestore (base64 adds ~33% overhead)
+        setFormErrors(prev => ({ ...prev, teamImage: 'Image is too large. Please use a smaller image (< 700KB).' }));
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTeamImagePreview(reader.result as string);
+        setMemberAvatar(reader.result as string);
+        setFormErrors(prev => ({ ...prev, teamImage: '' }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const editTeamMember = (member: any) => {
+    setEditingTeamId(member.id);
+    setMemberName(member.name);
+    setMemberRole(member.role);
+    setMemberBio(member.bio);
+    setMemberAvatar(member.avatar);
+    setTeamImagePreview(member.avatar);
+    setMemberLinkedin(member.linkedin);
+    setMemberGithub(member.github);
+    setMemberKaggle(member.kaggle);
+    setMemberSkills(member.skills.join(', '));
+    setMemberOrder(member.order.toString());
+    setActiveTab('team');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleTeamSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin) return;
@@ -254,7 +289,7 @@ const AdminDashboard = () => {
     if (!memberName.trim()) errors.memberName = 'Name is required';
     if (!memberRole.trim()) errors.memberRole = 'Role is required';
     if (!memberBio.trim()) errors.memberBio = 'Bio is required';
-    if (!validateUrl(memberAvatar)) errors.memberAvatar = 'Invalid avatar URL format';
+    if (!memberAvatar.trim()) errors.memberAvatar = 'Avatar is required (upload or URL)';
     if (memberLinkedin && !validateUrl(memberLinkedin)) errors.memberLinkedin = 'Invalid LinkedIn URL format';
     if (!memberSkills.trim()) errors.memberSkills = 'Skills are required (comma separated)';
     
@@ -269,6 +304,7 @@ const AdminDashboard = () => {
     }
 
     setFormErrors({});
+    console.log('Submitting team member...', { editingTeamId, memberName });
     try {
       const skillsArray = Array.from(new Set(
         memberSkills
@@ -277,7 +313,7 @@ const AdminDashboard = () => {
           .filter(s => s !== '')
       ));
 
-      await addDoc(collection(db, 'team'), {
+      const teamData = {
         name: memberName.trim(),
         role: memberRole.trim(),
         bio: memberBio.trim(),
@@ -287,18 +323,31 @@ const AdminDashboard = () => {
         kaggle: memberKaggle.trim(),
         skills: skillsArray,
         order: parseInt(memberOrder),
-        createdAt: serverTimestamp()
-      });
+        updatedAt: serverTimestamp()
+      };
+
+      if (editingTeamId) {
+        await updateDoc(doc(db, 'team', editingTeamId), teamData);
+        setEditingTeamId(null);
+      } else {
+        await addDoc(collection(db, 'team'), {
+          ...teamData,
+          createdAt: serverTimestamp()
+        });
+      }
+
       setMemberName('');
       setMemberRole('');
       setMemberBio('');
+      setMemberAvatar('');
+      setTeamImagePreview(null);
       setMemberLinkedin('');
       setMemberGithub('');
       setMemberKaggle('');
       setMemberSkills('');
       setMemberOrder((team.length + 2).toString());
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, 'team');
+      handleFirestoreError(error, editingTeamId ? OperationType.UPDATE : OperationType.CREATE, 'team');
     }
   };
 
@@ -846,8 +895,8 @@ const AdminDashboard = () => {
               {activeTab === 'team' && (
                 <>
                   <h2 className="text-2xl font-black mb-6 flex items-center gap-2 text-gray-900">
-                    <Plus className="w-6 h-6 text-indigo-600" />
-                    Add Member
+                    {editingTeamId ? <Edit2 className="w-6 h-6 text-indigo-600" /> : <Plus className="w-6 h-6 text-indigo-600" />}
+                    {editingTeamId ? 'Edit Member' : 'Add Member'}
                   </h2>
                   <form onSubmit={handleTeamSubmit} className="space-y-4">
                     <div>
@@ -895,20 +944,54 @@ const AdminDashboard = () => {
                       />
                       {formErrors.memberBio && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberBio}</p>}
                     </div>
-                    <div>
-                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Avatar URL</label>
-                      <input
-                        type="url"
-                        value={memberAvatar}
-                        onChange={(e) => {
-                          setMemberAvatar(e.target.value);
-                          if (formErrors.memberAvatar) setFormErrors(prev => ({ ...prev, memberAvatar: '' }));
-                        }}
-                        className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberAvatar ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium`}
-                        placeholder="https://picsum.photos/seed/ceo/200/200"
-                      />
+                    
+                    <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                      <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Member Image</label>
+                      
+                      {teamImagePreview && (
+                        <div className="mb-4 relative group">
+                          <img src={teamImagePreview} alt="Preview" className="w-full h-48 object-cover rounded-xl shadow-sm" />
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setTeamImagePreview(null);
+                              setMemberAvatar('');
+                            }}
+                            className="absolute top-2 right-2 p-1.5 bg-white/90 text-red-600 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="flex flex-col gap-3">
+                        <label className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-white border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all group">
+                          <Upload className="w-5 h-5 text-gray-400 group-hover:text-indigo-600" />
+                          <span className="text-sm font-bold text-gray-500 group-hover:text-indigo-600">Upload Image</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                        </label>
+                        
+                        <div className="relative">
+                          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+                          <div className="relative flex justify-center text-[10px] uppercase font-black text-gray-400"><span className="bg-gray-50 px-2 tracking-widest">OR URL</span></div>
+                        </div>
+
+                        <input
+                          type="url"
+                          value={memberAvatar}
+                          onChange={(e) => {
+                            setMemberAvatar(e.target.value);
+                            setTeamImagePreview(e.target.value);
+                            if (formErrors.memberAvatar) setFormErrors(prev => ({ ...prev, memberAvatar: '' }));
+                          }}
+                          className={`w-full px-4 py-3 rounded-xl border ${formErrors.memberAvatar ? 'border-red-500 ring-1 ring-red-500' : 'border-gray-100'} focus:ring-2 focus:ring-indigo-500 outline-none font-medium text-sm`}
+                          placeholder="https://picsum.photos/seed/ceo/200/200"
+                        />
+                      </div>
                       {formErrors.memberAvatar && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberAvatar}</p>}
+                      {formErrors.teamImage && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.teamImage}</p>}
                     </div>
+
                     <div>
                       <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Skills (comma separated)</label>
                       <input
@@ -972,12 +1055,35 @@ const AdminDashboard = () => {
                       />
                       {formErrors.memberOrder && <p className="text-red-500 text-[10px] font-bold mt-1 uppercase tracking-wider">{formErrors.memberOrder}</p>}
                     </div>
-                    <button
-                      type="submit"
-                      className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 mt-4"
-                    >
-                      Add Member
-                    </button>
+                    <div className="flex gap-3 mt-4">
+                      {editingTeamId && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingTeamId(null);
+                            setMemberName('');
+                            setMemberRole('');
+                            setMemberBio('');
+                            setMemberAvatar('');
+                            setTeamImagePreview(null);
+                            setMemberLinkedin('');
+                            setMemberGithub('');
+                            setMemberKaggle('');
+                            setMemberSkills('');
+                            setMemberOrder((team.length + 1).toString());
+                          }}
+                          className="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-black text-lg hover:bg-gray-200 transition-all"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        className="flex-[2] py-4 bg-indigo-600 text-white rounded-2xl font-black text-lg hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
+                      >
+                        {editingTeamId ? 'Update Member' : 'Add Member'}
+                      </button>
+                    </div>
                   </form>
                   <button
                     onClick={seedTeam}
@@ -1324,12 +1430,22 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => confirmDelete('team', member.id, `Team member: ${member.name}`)}
-                        className="p-2 text-gray-300 hover:text-red-600 transition-colors"
-                      >
-                        <Trash2 className="w-6 h-6" />
-                      </button>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={() => editTeamMember(member)}
+                          className="p-2 text-gray-300 hover:text-indigo-600 transition-colors"
+                          title="Edit Member"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => confirmDelete('team', member.id, `Team member: ${member.name}`)}
+                          className="p-2 text-gray-300 hover:text-red-600 transition-colors"
+                          title="Delete Member"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )

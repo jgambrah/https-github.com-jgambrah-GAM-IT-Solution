@@ -146,13 +146,14 @@ service cloud.firestore {
 
     function isValidTeamMember(data) {
       return hasRequiredFields(['name', 'role', 'bio', 'avatar', 'order', 'createdAt']) &&
-             hasOnlyAllowedFields(['name', 'role', 'bio', 'avatar', 'linkedin', 'github', 'kaggle', 'skills', 'order', 'createdAt']) &&
+             hasOnlyAllowedFields(['name', 'role', 'bio', 'avatar', 'linkedin', 'github', 'kaggle', 'skills', 'order', 'createdAt', 'updatedAt']) &&
              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
              data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
-             data.bio is string && data.bio.size() > 0 && data.bio.size() < 5000 &&
-             data.avatar is string && data.avatar.size() > 0 &&
+             data.bio is string && data.bio.size() > 0 && data.bio.size() < 10000 &&
+             data.avatar is string && data.avatar.size() > 0 && data.avatar.size() < 1000000 &&
              data.order is int &&
              data.createdAt is timestamp &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
              (!('linkedin' in data) || data.linkedin is string) &&
              (!('github' in data) || data.github is string) &&
              (!('kaggle' in data) || data.kaggle is string) &&
