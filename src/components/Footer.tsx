@@ -12,6 +12,8 @@ const Footer = () => {
       links: [
         { name: "GAM Edu", href: "/apps/gam-edu" },
         { name: "GAM Med", href: "/apps/gam-med" },
+        { name: "GAM Shop", href: "/apps/gam-shop" },
+        { name: "GAM Poul", href: "/apps/gam-poul" },
         { name: "GAM Hub", href: "/#apps" },
         { name: "Custom Software", href: "/#custom-solutions" },
       ]

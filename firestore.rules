@@ -1,51 +1,62 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     // ===============================================================
     // Assumed Data Model
     // ===============================================================
     //
-    // Collection: demoRequests
-    // Document ID: auto-generated
+    // Collection: flocks
     // Fields:
-    //   - firstName: string (required, size < 100)
-    //   - lastName: string (required, size < 100)
-    //   - email: string (required, email format)
-    //   - product: string (required, enum)
-    //   - status: string (required, enum)
+    //   - name: string (required)
+    //   - breed: string (required)
+    //   - source: string (optional)
+    //   - ageWeeks: number (optional)
+    //   - initialCount: number (required)
+    //   - currentCount: number (required)
+    //   - status: string (enum: ['active', 'culled'])
     //   - createdAt: timestamp (required)
     //
-    // Collection: feedback
-    // Document ID: auto-generated
+    // Collection: eggProduction
     // Fields:
-    //   - name: string (required, size < 100)
-    //   - message: string (required, size < 5000)
-    //   - createdAt: timestamp (required)
+    //   - flockId: string (required)
+    //   - date: string (required, YYYY-MM-DD)
+    //   - totalEggs: number (required)
+    //   - grading: map (required)
+    //   - notes: string (optional)
     //
-    // Collection: newsletterSubscriptions
-    // Document ID: auto-generated
+    // Collection: inventory
     // Fields:
-    //   - email: string (required, email format)
-    //   - subscribedAt: timestamp (required)
-    //   - active: bool (required)
+    //   - type: string (enum: ['Feed', 'Drug', 'Consumable'])
+    //   - name: string (required)
+    //   - quantity: number (required)
+    //   - unit: string (required)
+    //   - lowStockThreshold: number (required)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: transactions
+    // Fields:
+    //   - type: string (enum: ['Income', 'Expense'])
+    //   - category: string (enum: ['Feed', 'Labor', 'Meds', 'Sales', 'Other'])
+    //   - amount: number (required)
+    //   - date: timestamp (required)
+    //   - description: string (required)
+    //   - flockId: string (optional)
+    //
+    // Collection: healthRecords
+    // Fields:
+    //   - flockId: string (required)
+    //   - type: string (enum: ['Vaccination', 'Medication', 'VetVisit'])
+    //   - date: string (required, YYYY-MM-DD)
+    //   - description: string (required)
+    //   - cost: number (optional)
     //
     // Collection: users
-    // Document ID: Firebase Auth UID
     // Fields:
-    //   - uid: string (required, matches doc ID)
-    //   - email: string (required, email format)
-    //   - displayName: string (optional, size < 100)
-    //   - role: string (required, enum: admin, user)
-    //   - createdAt: timestamp (required)
-    //
-    // Collection: callbacks
-    // Document ID: auto-generated
-    // Fields:
-    //   - name: string (required, size < 100)
-    //   - phone: string (required, size < 20)
-    //   - preferredTime: string (required, size < 100)
-    //   - message: string (optional, size < 1000)
-    //   - status: string (required, enum)
+    //   - uid: string (required)
+    //   - email: string (required)
+    //   - displayName: string (required)
+    //   - role: string (enum: ['CEO', 'Manager', 'Staff'])
     //   - createdAt: timestamp (required)
     //
     // ===============================================================
@@ -62,15 +73,27 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isAdmin() {
-      return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-          (request.auth.token.email == "jamesgambrah@gmail.com" && request.auth.token.email_verified == true));
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
 
-    function isValidEmail(email) {
-      return email is string &&
-        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isCEO() {
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'CEO') ||
+        (request.auth.token.email == "jamesgambrah@gmail.com" && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isManager() {
+      return isCEO() || hasRole('Manager');
+    }
+
+    function isStaff() {
+      return isManager() || hasRole('Staff');
     }
 
     function hasOnlyAllowedFields(fields) {
@@ -81,151 +104,107 @@ service cloud.firestore {
       return request.resource.data.keys().hasAll(fields);
     }
 
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
     // ===============================================================
     // Domain Validators
     // ===============================================================
 
-    function isValidDemoRequest(data) {
-      return hasRequiredFields(['firstName', 'lastName', 'email', 'product', 'status', 'createdAt']) &&
-             hasOnlyAllowedFields(['firstName', 'lastName', 'email', 'product', 'status', 'createdAt']) &&
-             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 100 &&
-             data.lastName is string && data.lastName.size() > 0 && data.lastName.size() < 100 &&
-             isValidEmail(data.email) &&
-             data.product in ['gam-hub', 'gam-edu', 'gam-med', 'retail-os', 'hotel-intel', 'logistics-pro', 'fintech-vault'] &&
-             data.status in ['pending', 'contacted', 'completed', 'cancelled'] &&
-             data.createdAt is timestamp;
-    }
-
-    function isValidFeedback(data) {
-      return hasRequiredFields(['name', 'message', 'createdAt']) &&
-             hasOnlyAllowedFields(['name', 'message', 'createdAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.message is string && data.message.size() > 0 && data.message.size() < 5000 &&
-             data.createdAt is timestamp;
-    }
-
-    function isValidNewsletterSubscription(data) {
-      return hasRequiredFields(['email', 'subscribedAt', 'active']) &&
-             hasOnlyAllowedFields(['email', 'subscribedAt', 'active']) &&
-             isValidEmail(data.email) &&
-             data.subscribedAt is timestamp &&
-             data.active is bool;
-    }
-
     function isValidUser(data) {
       return hasRequiredFields(['uid', 'email', 'role', 'createdAt']) &&
-             hasOnlyAllowedFields(['uid', 'email', 'displayName', 'role', 'createdAt']) &&
-             data.uid is string && data.uid == request.auth.uid &&
+             data.uid == request.auth.uid &&
              isValidEmail(data.email) &&
-             data.role in ['admin', 'user'] &&
-             data.createdAt is timestamp &&
-             (!('displayName' in data) || (data.displayName is string && data.displayName.size() < 100));
-    }
-
-    function isValidTestimonial(data) {
-      return hasRequiredFields(['name', 'role', 'content', 'avatar', 'color', 'createdAt']) &&
-             hasOnlyAllowedFields(['name', 'role', 'content', 'avatar', 'color', 'createdAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
-             data.avatar is string && data.avatar.size() > 0 &&
-             data.color is string &&
+             data.role in ['CEO', 'Manager', 'Staff'] &&
              data.createdAt is timestamp;
     }
 
-    function isValidNewsItem(data) {
-      return hasRequiredFields(['title', 'content', 'type', 'author', 'createdAt']) &&
-             hasOnlyAllowedFields(['title', 'content', 'type', 'mediaUrl', 'author', 'createdAt']) &&
-             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-             data.content is string && data.content.size() > 0 && data.content.size() < 10000 &&
-             data.type in ['text', 'image', 'video', 'youtube', 'instagram', 'tiktok'] &&
-             data.author is string && data.author.size() > 0 && data.author.size() < 100 &&
-             data.createdAt is timestamp &&
-             (!('mediaUrl' in data) || (data.mediaUrl is string && data.mediaUrl.size() > 0));
+    function isValidFlock(data) {
+      return hasRequiredFields(['name', 'breed', 'initialCount', 'currentCount', 'status', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.breed is string &&
+             data.initialCount is number && data.initialCount >= 0 &&
+             data.currentCount is number && data.currentCount >= 0 &&
+             data.status in ['active', 'culled'] &&
+             data.createdAt is timestamp;
     }
 
-    function isValidTeamMember(data) {
-      return hasRequiredFields(['name', 'role', 'bio', 'avatar', 'order', 'createdAt']) &&
-             hasOnlyAllowedFields(['name', 'role', 'bio', 'avatar', 'linkedin', 'github', 'kaggle', 'skills', 'order', 'createdAt', 'updatedAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.role is string && data.role.size() > 0 && data.role.size() < 100 &&
-             data.bio is string && data.bio.size() > 0 && data.bio.size() < 10000 &&
-             data.avatar is string && data.avatar.size() > 0 && data.avatar.size() < 1000000 &&
-             data.order is int &&
-             data.createdAt is timestamp &&
-             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
-             (!('linkedin' in data) || data.linkedin is string) &&
-             (!('github' in data) || data.github is string) &&
-             (!('kaggle' in data) || data.kaggle is string) &&
-             (!('skills' in data) || data.skills is list);
+    function isValidEggProduction(data) {
+      return hasRequiredFields(['flockId', 'date', 'totalEggs', 'grading']) &&
+             data.flockId is string &&
+             data.date is string && data.date.matches("^\\d{4}-\\d{2}-\\d{2}$") &&
+             data.totalEggs is number && data.totalEggs >= 0 &&
+             data.grading is map;
     }
 
-    function isValidCallback(data) {
-      return hasRequiredFields(['name', 'phone', 'preferredTime', 'status', 'createdAt']) &&
-             hasOnlyAllowedFields(['name', 'phone', 'preferredTime', 'message', 'status', 'createdAt']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-             data.phone is string && data.phone.size() > 0 && data.phone.size() < 50 &&
-             data.preferredTime is string && data.preferredTime.size() > 0 && data.preferredTime.size() < 100 &&
-             data.status in ['pending', 'contacted', 'completed', 'cancelled'] &&
-             data.createdAt is timestamp &&
-             (!('message' in data) || (data.message is string && data.message.size() < 1000));
+    function isValidInventory(data) {
+      return hasRequiredFields(['type', 'name', 'quantity', 'unit', 'lowStockThreshold', 'updatedAt']) &&
+             data.type in ['Feed', 'Drug', 'Consumable'] &&
+             data.name is string && data.name.size() > 0 &&
+             data.quantity is number &&
+             data.unit is string &&
+             data.lowStockThreshold is number &&
+             data.updatedAt is timestamp;
+    }
+
+    function isValidTransaction(data) {
+      return hasRequiredFields(['type', 'category', 'amount', 'date', 'description']) &&
+             data.type in ['Income', 'Expense'] &&
+             data.category in ['Feed', 'Labor', 'Meds', 'Sales', 'Other'] &&
+             data.amount is number && data.amount >= 0 &&
+             data.date is timestamp &&
+             data.description is string;
     }
 
     // ===============================================================
     // Rules
     // ===============================================================
 
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'Staff' || isCEO());
+      allow update: if isAuthenticated() && isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isCEO());
+    }
+
+    match /flocks/{flockId} {
+      allow read: if isAuthenticated();
+      allow create: if isManager() && isValidFlock(request.resource.data);
+      allow update: if isManager() && isValidFlock(request.resource.data);
+      allow delete: if isCEO();
+    }
+
+    match /eggProduction/{productionId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff() && isValidEggProduction(request.resource.data);
+      allow update: if isManager() && isValidEggProduction(request.resource.data);
+      allow delete: if isCEO();
+    }
+
+    match /inventory/{itemId} {
+      allow read: if isAuthenticated();
+      allow create: if isManager() && isValidInventory(request.resource.data);
+      allow update: if isStaff() && isValidInventory(request.resource.data);
+      allow delete: if isCEO();
+    }
+
+    match /transactions/{transactionId} {
+      allow read: if isManager();
+      allow create: if isManager() && isValidTransaction(request.resource.data);
+      allow update: if isManager() && isValidTransaction(request.resource.data);
+      allow delete: if isCEO();
+    }
+
+    match /healthRecords/{recordId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff() && hasRequiredFields(['flockId', 'type', 'date', 'description']);
+      allow update: if isManager();
+      allow delete: if isCEO();
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
-    }
-
-    match /demoRequests/{requestId} {
-      allow create: if isValidDemoRequest(request.resource.data);
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /feedback/{feedbackId} {
-      allow create: if isValidFeedback(request.resource.data);
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /newsletterSubscriptions/{subscriptionId} {
-      allow create: if isValidNewsletterSubscription(request.resource.data);
-      allow read, update, delete: if isAdmin();
-    }
-
-    match /users/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
-      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) || isAdmin();
-      allow delete: if isAdmin();
-    }
-
-    match /testimonials/{testimonialId} {
-      allow read: if true;
-      allow create: if isAdmin() && isValidTestimonial(request.resource.data);
-      allow update: if isAdmin() && isValidTestimonial(request.resource.data);
-      allow delete: if isAdmin();
-    }
-
-    match /news/{newsId} {
-      allow read: if true;
-      allow create: if isAdmin() && isValidNewsItem(request.resource.data);
-      allow update: if isAdmin() && isValidNewsItem(request.resource.data);
-      allow delete: if isAdmin();
-    }
-
-    match /team/{memberId} {
-      allow read: if true;
-      allow create: if isAdmin() && isValidTeamMember(request.resource.data);
-      allow update: if isAdmin() && isValidTeamMember(request.resource.data);
-      allow delete: if isAdmin();
-    }
-
-    match /callbacks/{callbackId} {
-      allow create: if isValidCallback(request.resource.data);
-      allow read, update, delete: if isAdmin();
     }
   }
 }

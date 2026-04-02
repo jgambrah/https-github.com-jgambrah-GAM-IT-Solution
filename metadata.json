@@ -1,5 +1,9 @@
 {
-  "name": "GAM IT Solutions",
-  "description": "Professional SaaS landing page for GAM IT Solutions, featuring product showcases, app access, and demo request forms.",
-  "requestFramePermissions": []
+  "name": "GAM POUL",
+  "description": "A comprehensive poultry farm management system for real-time flock tracking, egg production analytics, inventory optimization, and financial intelligence.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
 }

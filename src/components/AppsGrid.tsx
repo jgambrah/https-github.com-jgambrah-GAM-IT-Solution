@@ -45,6 +45,16 @@ const AppsGrid = () => {
       demoLink: "https://gam-shop-359057282274.us-west1.run.app/",
       external: false,
     },
+    {
+      id: "gam-poul",
+      name: "GAM Poul",
+      tagline: "360° Farm Command Center.",
+      description: "A Decision Support System that turns raw farm data into actionable insights, reducing waste and scaling poultry operations.",
+      color: "bg-amber-600",
+      link: "/apps/gam-poul",
+      demoLink: "https://gam-poul-359057282274.us-west1.run.app",
+      external: false,
+    },
   ];
 
   return (
@@ -67,7 +77,7 @@ const AppsGrid = () => {
               transition={{ delay: 0.1 }}
               className="text-lg text-gray-600 dark:text-gray-400"
             >
-              Navigate through our suite of elite digital products. We are actively developing new ecosystems for Retail, Hospitality, and more.
+              Navigate through our suite of elite digital products. We are actively engineering new ecosystems for Hospitality, Logistics, and more.
             </motion.p>
           </div>
           <motion.button
@@ -79,7 +89,7 @@ const AppsGrid = () => {
           </motion.button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {apps.map((app, index) => (
             <motion.div
               key={index}
@@ -145,9 +155,8 @@ const AppsGrid = () => {
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Future Horizons</h3>
             <p className="text-gray-600 dark:text-gray-400">Engineering the next generation of sector-specific intelligence.</p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
-              { name: "Agro Intelligence", icon: "🌾" },
               { name: "Hotel Intelligence", icon: "🏨" },
               { name: "Logistics Pro", icon: "🚚" },
               { name: "FinTech Vault", icon: "💰" },

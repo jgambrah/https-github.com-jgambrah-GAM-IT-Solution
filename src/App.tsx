@@ -23,6 +23,7 @@ import GamHub from './pages/GamHub';
 import GamEdu from './pages/GamEdu';
 import GamMed from './pages/GamMed';
 import GamShop from './pages/GamShop';
+import GamPoul from './pages/GamPoul';
 import SEO from './components/SEO';
 import { Laptop, Mail, Phone, MapPin, Twitter, Linkedin, Github, Users } from 'lucide-react';
 
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="/apps/gam-edu" element={<GamEdu />} />
           <Route path="/apps/gam-med" element={<GamMed />} />
           <Route path="/apps/gam-shop" element={<GamShop />} />
+          <Route path="/apps/gam-poul" element={<GamPoul />} />
           <Route path="/ceo-dashboard" element={<AdminDashboard />} />
         </Routes>
       </main>

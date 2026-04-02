@@ -12,7 +12,7 @@ interface SEOProps {
 const SEO: React.FC<SEOProps> = ({
   title = 'GAM IT Solutions | Digital Transformation in Ghana',
   description = 'Leading IT solutions provider in Ghana, specializing in institutional digital infrastructure, healthcare intelligence, and national-scale technological advancements.',
-  keywords = 'IT solutions, Ghana, digital transformation, healthcare software, educational software, GAM IT Solutions, software development',
+  keywords = 'IT solutions, Ghana, digital transformation, healthcare software, educational software, GAM IT Solutions, software development, GAM Poul, poultry management',
   image = 'https://picsum.photos/seed/gamit/1200/630',
   url = 'https://gamitsolutions.com'
 }) => {

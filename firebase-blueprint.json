@@ -1,228 +1,121 @@
 {
   "entities": {
-    "demoRequest": {
-      "title": "Demo Request",
-      "description": "A request for a product demo from a potential client.",
+    "flock": {
+      "title": "Flock",
+      "description": "A group of birds on the farm.",
       "type": "object",
       "properties": {
-        "firstName": {
-          "type": "string",
-          "description": "The first name of the requester."
-        },
-        "lastName": {
-          "type": "string",
-          "description": "The last name of the requester."
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "The work email of the requester."
-        },
-        "product": {
-          "type": "string",
-          "description": "The product they are interested in.",
-          "enum": ["gam-hub", "gam-edu", "gam-med", "retail-os", "hotel-intel", "logistics-pro", "fintech-vault"]
-        },
-        "status": {
-          "type": "string",
-          "description": "The status of the request.",
-          "enum": ["pending", "contacted", "completed", "cancelled"]
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the request was created."
-        }
+        "name": { "type": "string", "description": "The name or ID of the flock." },
+        "breed": { "type": "string", "description": "The breed of the birds." },
+        "source": { "type": "string", "description": "The source or supplier of the birds." },
+        "ageWeeks": { "type": "integer", "description": "The age of the birds in weeks." },
+        "initialCount": { "type": "integer", "description": "The initial number of birds in the flock." },
+        "currentCount": { "type": "integer", "description": "The current number of birds in the flock." },
+        "status": { "type": "string", "enum": ["active", "culled"], "description": "The status of the flock." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the flock was added." }
       },
-      "required": ["firstName", "lastName", "email", "product", "status", "createdAt"]
+      "required": ["name", "breed", "initialCount", "currentCount", "status", "createdAt"]
     },
-    "feedback": {
-      "title": "Feedback",
-      "description": "General feedback or feature requests from users.",
+    "eggProduction": {
+      "title": "Egg Production",
+      "description": "Daily egg production record for a flock.",
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the person providing feedback."
+        "flockId": { "type": "string", "description": "The ID of the flock." },
+        "date": { "type": "string", "format": "date", "description": "The date of production." },
+        "totalEggs": { "type": "integer", "description": "The total number of eggs collected." },
+        "grading": {
+          "type": "object",
+          "properties": {
+            "large": { "type": "integer" },
+            "medium": { "type": "integer" },
+            "small": { "type": "integer" },
+            "cracked": { "type": "integer" }
+          }
         },
-        "message": {
-          "type": "string",
-          "description": "The feedback message."
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the feedback was submitted."
-        }
+        "notes": { "type": "string", "description": "Any additional notes." }
       },
-      "required": ["name", "message", "createdAt"]
+      "required": ["flockId", "date", "totalEggs", "grading"]
     },
-    "newsletterSubscription": {
-      "title": "Newsletter Subscription",
-      "description": "A subscription to the GAM IT Solutions newsletter.",
+    "inventory": {
+      "title": "Inventory Item",
+      "description": "An item in the farm's inventory (feed, drugs, etc.).",
       "type": "object",
       "properties": {
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "The email address subscribed."
-        },
-        "subscribedAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the subscription occurred."
-        },
-        "active": {
-          "type": "boolean",
-          "description": "Whether the subscription is currently active."
-        }
+        "type": { "type": "string", "enum": ["Feed", "Drug", "Consumable"], "description": "The type of inventory item." },
+        "name": { "type": "string", "description": "The name of the item." },
+        "quantity": { "type": "number", "description": "The current quantity in stock." },
+        "unit": { "type": "string", "description": "The unit of measurement (e.g., bags, liters, vials)." },
+        "lowStockThreshold": { "type": "number", "description": "The threshold for low stock alerts." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the inventory was last updated." }
       },
-      "required": ["email", "subscribedAt", "active"]
+      "required": ["type", "name", "quantity", "unit", "lowStockThreshold", "updatedAt"]
+    },
+    "transaction": {
+      "title": "Financial Transaction",
+      "description": "An income or expense transaction.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["Income", "Expense"], "description": "The type of transaction." },
+        "category": { "type": "string", "enum": ["Feed", "Labor", "Meds", "Sales", "Other"], "description": "The category of the transaction." },
+        "amount": { "type": "number", "description": "The amount of the transaction." },
+        "date": { "type": "string", "format": "date-time", "description": "The date of the transaction." },
+        "description": { "type": "string", "description": "A description of the transaction." },
+        "flockId": { "type": "string", "description": "The ID of the flock (optional)." }
+      },
+      "required": ["type", "category", "amount", "date", "description"]
+    },
+    "healthRecord": {
+      "title": "Health Record",
+      "description": "A health-related event for a flock.",
+      "type": "object",
+      "properties": {
+        "flockId": { "type": "string", "description": "The ID of the flock." },
+        "type": { "type": "string", "enum": ["Vaccination", "Medication", "VetVisit"], "description": "The type of health event." },
+        "date": { "type": "string", "format": "date", "description": "The date of the event." },
+        "description": { "type": "string", "description": "A description of the event." },
+        "cost": { "type": "number", "description": "The cost of the event (optional)." }
+      },
+      "required": ["flockId", "type", "date", "description"]
     },
     "user": {
       "title": "User",
-      "description": "A user of the system, potentially with administrative privileges.",
+      "description": "A user of the system with a specific role.",
       "type": "object",
       "properties": {
-        "uid": {
-          "type": "string",
-          "description": "The unique Firebase Auth UID."
-        },
-        "email": {
-          "type": "string",
-          "format": "email",
-          "description": "The user's email address."
-        },
-        "displayName": {
-          "type": "string",
-          "description": "The user's display name."
-        },
-        "role": {
-          "type": "string",
-          "description": "The user's role in the system.",
-          "enum": ["admin", "user"]
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the user record was created."
-        }
+        "uid": { "type": "string", "description": "The Firebase Auth UID." },
+        "email": { "type": "string", "format": "email", "description": "The user's email." },
+        "displayName": { "type": "string", "description": "The user's display name." },
+        "role": { "type": "string", "enum": ["CEO", "Manager", "Staff"], "description": "The user's role." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the user was created." }
       },
       "required": ["uid", "email", "role", "createdAt"]
-    },
-    "testimonial": {
-      "title": "Testimonial",
-      "description": "A client testimonial.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "role": { "type": "string" },
-        "content": { "type": "string" },
-        "avatar": { "type": "string" },
-        "color": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "role", "content", "avatar", "color", "createdAt"]
-    },
-    "newsItem": {
-      "title": "News Item",
-      "description": "A news update or post.",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "content": { "type": "string" },
-        "type": { "type": "string", "enum": ["text", "image", "video", "youtube", "instagram", "tiktok"] },
-        "mediaUrl": { "type": "string" },
-        "author": { "type": "string" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["title", "content", "type", "author", "createdAt"]
-    },
-    "teamMember": {
-      "title": "Team Member",
-      "description": "A member of the GAM IT Solutions team.",
-      "type": "object",
-      "properties": {
-        "name": { "type": "string" },
-        "role": { "type": "string" },
-        "bio": { "type": "string" },
-        "avatar": { "type": "string" },
-        "linkedin": { "type": "string" },
-        "github": { "type": "string" },
-        "kaggle": { "type": "string" },
-        "skills": { "type": "array", "items": { "type": "string" } },
-        "order": { "type": "integer" },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["name", "role", "bio", "avatar", "order", "createdAt"]
-    },
-    "callback": {
-      "title": "Callback Request",
-      "description": "A request for a phone callback from a potential client.",
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "The name of the person requesting a callback."
-        },
-        "phone": {
-          "type": "string",
-          "description": "The phone number to call."
-        },
-        "preferredTime": {
-          "type": "string",
-          "description": "The preferred time for the callback."
-        },
-        "message": {
-          "type": "string",
-          "description": "Any additional message or context."
-        },
-        "status": {
-          "type": "string",
-          "description": "The status of the request.",
-          "enum": ["pending", "contacted", "completed", "cancelled"]
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "When the request was created."
-        }
-      },
-      "required": ["name", "phone", "preferredTime", "status", "createdAt"]
     }
   },
   "firestore": {
-    "/demoRequests/{requestId}": {
-      "schema": "demoRequest",
-      "description": "Collection of demo requests."
+    "/flocks/{flockId}": {
+      "schema": "flock",
+      "description": "Collection of flocks."
     },
-    "/feedback/{feedbackId}": {
-      "schema": "feedback",
-      "description": "Collection of user feedback."
+    "/eggProduction/{productionId}": {
+      "schema": "eggProduction",
+      "description": "Collection of egg production records."
     },
-    "/newsletterSubscriptions/{subscriptionId}": {
-      "schema": "newsletterSubscription",
-      "description": "Collection of newsletter subscriptions."
+    "/inventory/{itemId}": {
+      "schema": "inventory",
+      "description": "Collection of inventory items."
+    },
+    "/transactions/{transactionId}": {
+      "schema": "transaction",
+      "description": "Collection of financial transactions."
+    },
+    "/healthRecords/{recordId}": {
+      "schema": "healthRecord",
+      "description": "Collection of health records."
     },
     "/users/{userId}": {
       "schema": "user",
       "description": "Collection of user profiles and roles."
-    },
-    "/testimonials/{testimonialId}": {
-      "schema": "testimonial",
-      "description": "Collection of client testimonials."
-    },
-    "/news/{newsId}": {
-      "schema": "newsItem",
-      "description": "Collection of news updates."
-    },
-    "/team/{memberId}": {
-      "schema": "teamMember",
-      "description": "Collection of team members."
-    },
-    "/callbacks/{callbackId}": {
-      "schema": "callback",
-      "description": "Collection of callback requests."
     }
   }
 }
