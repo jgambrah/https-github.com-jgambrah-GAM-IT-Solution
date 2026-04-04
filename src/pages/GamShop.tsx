@@ -22,13 +22,39 @@ import {
   CreditCard,
   Search,
   FileText,
-  Cloud
+  Cloud,
+  MessageSquare,
+  Sparkles,
+  ShieldCheck,
+  EyeOff
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 
 const GamShop = () => {
   const features = [
+    {
+      title: "Digital Storefront",
+      icon: <Globe className="w-6 h-6" />,
+      items: [
+        "Instant E-commerce Presence: Professional mobile-responsive store",
+        "WhatsApp 'Request to Buy' Integration: Direct sales conversations",
+        "Smart Product Catalog: High-speed interface with real-time availability",
+        "Custom Business Branding: Personalized logo and SEO-friendly URL",
+        "Live Order Management: Dedicated dashboard to track incoming leads"
+      ]
+    },
+    {
+      title: "AI Business Advisor",
+      icon: <Sparkles className="w-6 h-6" />,
+      items: [
+        "24/7 Business Consultant: Actionable advice to increase profitability",
+        "Inventory Health Monitoring: Identifies out-of-stock and expiring items",
+        "Sales Velocity Insights: Know your 'Quick Movers' vs slow inventory",
+        "Peak Period Optimization: Data-backed staffing and stock levels",
+        "Conversational Intelligence: Ask follow-up questions about your data"
+      ]
+    },
     {
       title: "Multi-Branch & Warehouse",
       icon: <Store className="w-6 h-6" />,
@@ -73,34 +99,34 @@ const GamShop = () => {
 
   const techSpecs = [
     {
-      title: "React 18 & TypeScript",
-      icon: <Layout className="w-6 h-6" />,
-      content: "Built with a strictly typed architecture for maximum reliability and maintainability, ensuring a robust retail experience."
-    },
-    {
-      title: "Firebase Real-time Infrastructure",
-      icon: <Database className="w-6 h-6" />,
-      content: "Powered by Firestore for instant data sync across all devices, with secure Google-powered Auth and scalable Storage."
-    },
-    {
-      title: "Google Gemini AI Integration",
+      title: "Powered by Gemini 3 Flash",
       icon: <Cpu className="w-6 h-6" />,
-      content: "Integrated AI engine that analyzes sales data to provide actionable business insights and growth recommendations."
+      content: "Integrates the latest Gemini 3 Flash AI for advanced reasoning and deep data analysis with Real-Time Market Grounding for Ghanaian economic indicators."
     },
     {
-      title: "Financial Reporting Engine",
-      icon: <FileText className="w-6 h-6" />,
-      content: "Robust client-side libraries (jsPDF, PapaParse) for generating professional documents and handling complex data exports."
+      title: "Real-Time Synchronization",
+      icon: <Database className="w-6 h-6" />,
+      content: "Built on Firebase Firestore, ensuring that POS updates reflect on your digital storefront instantly with zero lag."
     },
     {
-      title: "Role-Based Access Control",
+      title: "High-Performance UI",
+      icon: <Layout className="w-6 h-6" />,
+      content: "Developed using React 18 and Vite, providing a lightning-fast user experience with fluid Framer Motion animations."
+    },
+    {
+      title: "Tenant Data Isolation",
+      icon: <ShieldCheck className="w-6 h-6" />,
+      content: "Every business is strictly isolated. Your data is cryptographically scoped to your unique Business Unit ID, ensuring zero cross-contamination."
+    },
+    {
+      title: "Privacy-First AI",
+      icon: <EyeOff className="w-6 h-6" />,
+      content: "Summary-Only approach: The AI only sees anonymized data aggregates, never raw customer PII or sensitive staff records."
+    },
+    {
+      title: "Enterprise Security",
       icon: <Lock className="w-6 h-6" />,
-      content: "Granular permissions for Managers, Clerks, Accountants, and Supervisors to ensure total operational security."
-    },
-    {
-      title: "Offline Awareness & Sync",
-      icon: <Cloud className="w-6 h-6" />,
-      content: "Built-in indicators to alert users of connectivity status and secure cloud sync to Google Cloud infrastructure."
+      content: "Robust Firestore Security Rules validate every request, with encrypted AI pipelines and guaranteed data ownership."
     }
   ];
 
@@ -109,7 +135,7 @@ const GamShop = () => {
       <SEO 
         title="GAM Shop | SmartPOS Enterprise-Grade Retail Management"
         description="GAM Shop is a powerful, multi-branch Point of Sale and Inventory solution built for scale, precision, and real-time business intelligence."
-        keywords="POS system Ghana, retail management software, inventory management, GAM Shop, SmartPOS, multi-branch retail"
+        keywords="POS system Ghana, retail management software, inventory management, GAM Shop, SmartPOS, multi-branch retail, digital storefront, AI business advisor"
       />
       
       {/* Hero Section */}
@@ -128,11 +154,14 @@ const GamShop = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
             >
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-800/50 border border-orange-700 text-orange-200 text-sm font-medium mb-6">
+                <Sparkles className="w-4 h-4 text-yellow-400" /> New: AI Business Advisor & Digital Storefront
+              </div>
               <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight">
                 GAM Shop: <span className="text-orange-200">Enterprise-Grade</span> Retail Management
               </h1>
               <p className="text-xl text-orange-50 mb-8 leading-relaxed">
-                A powerful, multi-branch Point of Sale and Inventory solution built for scale, precision, and real-time business intelligence.
+                The POS that sells for you and the AI that grows with you. A complete Business Intelligence and E-commerce platform.
               </p>
               <div className="flex flex-wrap gap-4">
                 <a 
@@ -180,10 +209,10 @@ const GamShop = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
+              { title: "Digital Storefront", desc: "Your business online in seconds with WhatsApp integration.", icon: <Globe /> },
+              { title: "AI Advisor", desc: "Growth recommendations powered by Gemini 3 Flash.", icon: <Sparkles /> },
               { title: "Multi-Branch", desc: "Manage all outlets from a single dashboard.", icon: <Store /> },
-              { title: "AI Insights", desc: "Growth recommendations powered by Gemini.", icon: <Bot /> },
-              { title: "Real-time Sync", desc: "Instant data updates across all devices.", icon: <Zap /> },
-              { title: "Credit Control", desc: "Manage customer ledgers and limits.", icon: <CreditCard /> }
+              { title: "Real-time Sync", desc: "Instant data updates across all devices.", icon: <Zap /> }
             ].map((item, i) => (
               <motion.div
                 key={i}
@@ -204,7 +233,7 @@ const GamShop = () => {
       {/* Detailed Features */}
       <section className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, i) => (
               <motion.div
                 key={i}
@@ -304,10 +333,5 @@ const GamShop = () => {
     </div>
   );
 };
-
-// Mock Bot icon since it wasn't in the imports but used in Why Choose
-const Bot = ({ className }: { className?: string }) => (
-  <Cpu className={className} />
-);
 
 export default GamShop;

@@ -73,9 +73,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                   : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
               `}
             >
-              <item.icon size={22} className={({ isActive }: any) => isActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'} />
-              {isSidebarOpen && <span className="flex-1">{item.name}</span>}
-              {isSidebarOpen && <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
+              {({ isActive }) => (
+                <>
+                  <item.icon size={22} className={isActive ? 'text-emerald-600' : 'text-slate-400 group-hover:text-slate-600'} />
+                  {isSidebarOpen && <span className="flex-1">{item.name}</span>}
+                  {isSidebarOpen && <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
+                </>
+              )}
             </NavLink>
           ))}
         </nav>

@@ -9,7 +9,8 @@ import {
   ArrowDownRight,
   Activity,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  Package
 } from 'lucide-react';
 import { 
   LineChart, 
