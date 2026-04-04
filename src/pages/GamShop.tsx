@@ -165,7 +165,7 @@ const GamShop = () => {
               </p>
               <div className="flex flex-wrap gap-4">
                 <a 
-                  href="https://gam-shop-359057282274.us-west1.run.app/" 
+                  href="https://gam-shop-359057282274.us-west1.run.app" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="px-8 py-4 bg-white text-orange-600 font-bold rounded-2xl hover:bg-orange-50 transition-all flex items-center gap-2 shadow-xl shadow-orange-900/20"
@@ -310,7 +310,7 @@ const GamShop = () => {
               </p>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
                 <a 
-                  href="https://gam-shop-359057282274.us-west1.run.app/"
+                  href="https://gam-shop-359057282274.us-west1.run.app"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-10 py-5 bg-white text-orange-600 font-bold rounded-2xl hover:bg-orange-50 transition-all text-lg"

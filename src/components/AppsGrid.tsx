@@ -42,7 +42,7 @@ const AppsGrid = () => {
       description: "A powerful, multi-branch Point of Sale and Inventory solution built for scale, precision, and real-time business intelligence.",
       color: "bg-orange-600",
       link: "/apps/gam-shop",
-      demoLink: "https://gam-shop-359057282274.us-west1.run.app/",
+      demoLink: "https://gam-shop-359057282274.us-west1.run.app",
       external: false,
     },
     {
